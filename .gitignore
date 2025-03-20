@@ -1,0 +1,8 @@
+/target
+.venv
+.pytest_cache
+.vscode
+
+Cargo.lock
+*.so
+__pycache__

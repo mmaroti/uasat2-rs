@@ -13,15 +13,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Test module docstring.
-"""
+from typing import List
 
-from .uasat import *
-from .domain import *
 
-# __doc__ = uasat.__doc__
-# if hasattr(uasat, "__all__"):
-#     __all__ = uasat.__all__
+class Solver(object):
+    """
+    The CaDiCaL incremental SAT solver. The literals are unwrapped positive
+    and negative integers, exactly as in the DIMACS format.
+    """
 
-__all__ = ["Solver", "Element", "Domain"]
+    def __init__(): ...
+
+    def add_clause(self, literals: List[int]) -> None:
+        """
+        Adds the given clause to the solver. Negated literals are negative
+        integers, positive literals are positive ones. All literals must be
+        non-zero.
+        """

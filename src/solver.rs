@@ -18,12 +18,41 @@
 use pyo3::prelude::*;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
+use std::time::{Duration, SystemTime};
+
+/// Helper structure to check for python signals.
+struct CheckSig {
+    last: SystemTime,
+}
+
+impl CheckSig {
+    fn new() -> Self {
+        Self {
+            last: SystemTime::now(),
+        }
+    }
+}
+
+impl cadical::Callbacks for CheckSig {
+    fn terminate(&mut self) -> bool {
+        let now = SystemTime::now();
+        if now
+            .duration_since(self.last)
+            .is_ok_and(|v| v < Duration::from_millis(5))
+        {
+            return false;
+        }
+
+        self.last = now;
+        Python::with_gil(|py| py.check_signals()).is_err()
+    }
+}
 
 /// The CaDiCaL incremental SAT solver. The literals are unwrapped positive
 /// and negative integers, exactly as in the DIMACS format.
 #[pyclass(frozen)]
 pub struct Solver {
-    solver: Mutex<cadical::Solver>,
+    solver: Mutex<cadical::Solver<CheckSig>>,
     num_vars: AtomicU32,
 }
 
@@ -34,6 +63,7 @@ impl Solver {
     /// by default to the solver and serves as the true value.
     pub fn new() -> Self {
         let mut solver = cadical::Solver::new();
+        solver.set_callbacks(Some(CheckSig::new()));
         solver.add_clause([1]);
         Self {
             solver: Mutex::new(solver),
@@ -50,7 +80,8 @@ impl Solver {
     #[staticmethod]
     pub fn with_config(config: &str) -> Self {
         let mut solver = cadical::Solver::with_config(config).unwrap();
-        solver.add_clause(vec![1].into_iter());
+        solver.set_callbacks(Some(CheckSig::new()));
+        solver.add_clause([1]);
         Self {
             solver: Mutex::new(solver),
             num_vars: AtomicU32::new(1),
@@ -79,23 +110,19 @@ impl Solver {
     }
 
     /// Runs the solver and returns true if a solution is available.
-    pub fn solve(&self) -> bool {
-        self.solver.lock().unwrap().solve().unwrap()
+    pub fn solve(&self) -> Option<bool> {
+        self.solver.lock().unwrap().solve()
     }
 
     /// Solves the formula defined by the set of clauses under the given
     /// assumptions.
-    pub fn solve_with(&self, literals: Vec<i32>) -> bool {
-        self.solver
-            .lock()
-            .unwrap()
-            .solve_with(literals.into_iter())
-            .unwrap()
+    pub fn solve_with(&self, literals: Vec<i32>) -> Option<bool> {
+        self.solver.lock().unwrap().solve_with(literals.into_iter())
     }
 
     /// Returns the value of the literal in the found model.
-    pub fn get_value(&self, literal: i32) -> bool {
-        self.solver.lock().unwrap().value(literal) == Some(true)
+    pub fn get_value(&self, literal: i32) -> Option<bool> {
+        self.solver.lock().unwrap().value(literal)
     }
 
     /// Returns the number of variables in the solver.

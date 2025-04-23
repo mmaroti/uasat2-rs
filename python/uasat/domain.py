@@ -13,46 +13,84 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
+from typing import List, Optional
+from typeguard import typechecked
 
 from .uasat import Solver
 
 
+@typechecked
+def join_solvers(sol1: Optional[Solver], sol2: Optional[Solver]) -> Optional[Solver]:
+    if sol2 is None:
+        return sol1
+    else:
+        assert sol1 is None or sol1 == sol2
+        return sol2
+
+
+class Domain:
+    @typechecked
+    def __init__(self, length: int):
+        self.length = length
+
+
 class Element:
-    def __init__(self, domain: 'Domain', solver: Solver, literals: List[int]):
-        self.domain = domain
+    @typechecked
+    def __init__(self, solver: Optional[Solver], literals: List[int]):
         self.solver = solver
         self.literals = literals
 
     @property
-    def length(self):
+    @typechecked
+    def length(self) -> int:
         return len(self.literals)
 
-
-class Domain:
-    def __init__(self, length: int):
-        self.length = length
-
-    def compatible(self, elem: Element) -> bool:
-        return elem.domain == self and elem.length == self.length
-
-    def contains(self, elem: Element) -> Element:
-        assert self.compatible(elem)
-        raise NotImplementedError()
+    @typechecked
+    def __and__(self, other: 'Element') -> 'Element':
+        assert self.length == other.length
 
 
 class Operator:
+    @typechecked
     def __init__(self, domains: List[Domain], codomain: Domain):
         self.domains = domains
         self.codomain = codomain
 
     @property
-    def arity(self):
+    @typechecked
+    def arity(self) -> int:
         return len(self.domains)
 
-    def evaluate(self, elements: List[Element]) -> Element:
-        assert len(elements) == len(self.domains)
-        assert all(d.compatible(e) for (d, e) in zip(self.domains, elements))
+    @typechecked
+    def _get_solver(self, elems: List[Element]) -> Solver:
+        assert len(elems) == len(self.domains)
+        solver = None
+        for elem, dom in zip(elems, self.domains):
+            assert elem.length == dom.length
+            if solver is None:
+                solver = elem.solver
+            else:
+                assert solver == elem.solver
+        return solver
+
+    @typechecked
+    def evaluate(self, elems: List[Element]) -> Element:
+        raise NotImplementedError()
+
+
+BOOLEAN = Domain(1)
+
+
+class BooleanOp2(Operator):
+    def __init__(self, oper):
+        super().__init__([BOOLEAN, BOOLEAN], BOOLEAN)
+        self.oper = oper
+
+    def evaluate(self, elems: List[Element]) -> Element:
+        solver = self._get_solver(elems)
+
+
+BOOLEAN_AND = BooleanOp2(Solver.bool_and)
 
 
 class Boolean:
@@ -64,8 +102,6 @@ class Boolean:
         return [elem.solver.bool_true()]
 
     def bool_and(self, elem0: Element, elem1: Element) -> Element:
-        assert self.compatible(elem0) and self.compatible(elem1) \
-            and elem0.solver == elem1.solver
         elem2 = elem0.solver.bool_and(elem0.literals[0], elem1.literals[0])
         return Element(self, elem0.solver, [elem2])
 

@@ -24,9 +24,14 @@ class Solver(object):
 
     def __init__(): ...
 
-    def add_clause(self, literals: List[int]) -> None:
+    def add_clause(self, lits: List[int]) -> None:
         """
         Adds the given clause to the solver. Negated literals are negative
         integers, positive literals are positive ones. All literals must be
         non-zero.
+        """
+
+    def bool_and(self, lit0: int, lit1: int) -> int:
+        """
+        Returns the logical and of a pair of elements.
         """

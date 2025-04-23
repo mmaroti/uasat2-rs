@@ -24,4 +24,4 @@ from .domain import *
 # if hasattr(uasat, "__all__"):
 #     __all__ = uasat.__all__
 
-__all__ = ["Solver", "Element", "Domain"]
+__all__ = ["Solver", "BitVec", "Element", "Domain"]

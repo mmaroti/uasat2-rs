@@ -18,14 +18,15 @@
 mod solver;
 pub use solver::*;
 
-mod elem;
-pub use elem::*;
+mod bitvec;
+pub use bitvec::*;
 
 use pyo3::prelude::*;
 
 /// The uasat module implemented in Rust.
 #[pymodule]
 fn uasat(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<Solver>()?;
+    m.add_class::<PySolver>()?;
+    m.add_class::<PyBitVec>()?;
     Ok(())
 }

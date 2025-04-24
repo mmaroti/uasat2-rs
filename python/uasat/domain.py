@@ -36,7 +36,8 @@ class Domain:
 
 class Element:
     @typechecked
-    def __init__(self, solver: Optional[Solver], literals: List[int]):
+    def __init__(self, domain: 'Domain', solver: Solver, literals: List[int]):
+        self.domain = domain
         self.solver = solver
         self.literals = literals
 

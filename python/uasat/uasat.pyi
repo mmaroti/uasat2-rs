@@ -43,6 +43,7 @@ class Solver(object):
         * `unsat`: set internal options to target unsatisfiable instances
         """
 
+    @property
     def signature(self) -> str:
         """
         Returns the name and version of the CaDiCaL library.
@@ -54,6 +55,7 @@ class Solver(object):
         literal as an integer.
         """
 
+    @property
     def num_variables(self) -> int:
         """
         Returns the number of variables in the solver.
@@ -86,6 +88,7 @@ class Solver(object):
         Adds the quaternary clause to the solver.
         """
 
+    @property
     def num_clauses(self) -> int:
         """
         Returns the number of clauses in the solver.
@@ -153,6 +156,16 @@ class Solver(object):
         Returns the logical equivalence of a pair of elements.
         """
 
+    def bool_maj(self, lit0: int, lit1: int, lit2: int) -> int:
+        """
+        Returns the majority of three elements.
+        """
+
+    def bool_iff(self, lit0: int, lit1: int, lit2: int) -> int:
+        """
+        Returns 'lit1' if 'lit0' is true, otherwise 'lit2' is returned.
+        """
+
     def fold_all(self, lits: List[int]) -> int:
         """
         Computes the conjunction of the elements.
@@ -173,12 +186,40 @@ class Solver(object):
         Computes the at most one predicate over the given elements.
         """
 
-    def comp_equ(self, lits0: List[int], lits1: List[int]) -> int:
+    def comp_eq(self, lits0: List[int], lits1: List[int]) -> int:
         """
         Returns true if the two sequences are equal.
         """
 
-    def comp_neq(self, lits0: List[int], lits1: List[int]) -> int:
+    def comp_ne(self, lits0: List[int], lits1: List[int]) -> int:
         """
         Returns true if the two sequences are not equal.
+        """
+
+    def comp_le(self, lits0: List[int], lits1: List[int]) -> int:
+        """
+        Returns true if the first sequence is smaller than or equal to the
+        second one as a binary number when the least significant digit is
+        the first one. So [TRUE, FALSE] = 1 is smaller than [FALSE, TRUE] = 2.
+        The two sequences must have the same length.
+        """
+
+    def comp_lt(self, lits0: List[int], lits1: List[int]) -> int:
+        """
+        Returns true if the first sequence is smaller than the second one.
+        The two sequences must have the same length.
+        """
+
+    def comp_ge(self, lits0: List[int], lits1: List[int]) -> int:
+        """
+        Returns true if the first sequence is greater than or equal to the
+        second one as a binary number when the least significant digit is the
+        first one. So [TRUE, FALSE] = 1 is not greater than [FALSE, TRUE] = 2.
+        The two sequences must have the same length.
+        """
+
+    def comp_gt(self, lits0: List[int], lits1: List[int]) -> int:
+        """
+        Returns true if the first sequence is greater than the second one.
+        The two sequences must have the same length.
         """

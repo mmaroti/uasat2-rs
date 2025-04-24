@@ -15,6 +15,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::sync::Mutex;
 use std::time::{Duration, SystemTime};
@@ -54,6 +55,7 @@ pub struct Solver {
     num_vars: i32,
 }
 
+#[allow(clippy::new_without_default)]
 impl Solver {
     /// Constructs a new solver instance. The literal 1 is always added
     /// by default to the solver and serves as the true value.
@@ -257,6 +259,64 @@ impl Solver {
         self.bool_xor(Solver::bool_not(lit0), lit1)
     }
 
+    /// Returns the majority of three elements.
+    pub fn bool_maj(&mut self, lit0: i32, lit1: i32, lit2: i32) -> i32 {
+        if lit0 == lit1 || lit0 == lit2 || lit1 == Solver::bool_not(lit2) {
+            lit0
+        } else if lit1 == lit2 || lit0 == Solver::bool_not(lit2) {
+            lit1
+        } else if lit0 == Solver::bool_not(lit1) {
+            lit2
+        } else if lit0 == Solver::FALSE {
+            self.bool_and(lit1, lit2)
+        } else if lit0 == Solver::TRUE {
+            self.bool_or(lit1, lit2)
+        } else if lit1 == Solver::FALSE {
+            self.bool_and(lit0, lit2)
+        } else if lit1 == Solver::TRUE {
+            self.bool_or(lit0, lit2)
+        } else if lit2 == Solver::FALSE {
+            self.bool_and(lit0, lit1)
+        } else if lit2 == Solver::TRUE {
+            self.bool_or(lit0, lit1)
+        } else {
+            let lit3 = self.add_variable();
+            self.add_clause3(lit0, lit1, Solver::bool_not(lit3));
+            self.add_clause3(lit0, lit2, Solver::bool_not(lit3));
+            self.add_clause3(lit1, lit2, Solver::bool_not(lit3));
+            self.add_clause3(Solver::bool_not(lit0), Solver::bool_not(lit1), lit3);
+            self.add_clause3(Solver::bool_not(lit0), Solver::bool_not(lit2), lit3);
+            self.add_clause3(Solver::bool_not(lit1), Solver::bool_not(lit2), lit3);
+            lit3
+        }
+    }
+
+    /// Returns 'lit1' if 'lit0' is true, otherwise 'lit2' is returned.
+    pub fn bool_iff(&mut self, lit0: i32, lit1: i32, lit2: i32) -> i32 {
+        if lit1 == lit2 || lit0 == Solver::TRUE {
+            lit1
+        } else if lit0 == Solver::FALSE {
+            lit2
+        } else if lit1 == Solver::bool_not(lit2) {
+            self.bool_xor(lit0, lit2)
+        } else if lit0 == lit1 || lit1 == Solver::TRUE {
+            self.bool_or(lit0, lit2)
+        } else if lit0 == Solver::bool_not(lit1) || lit1 == Solver::FALSE {
+            self.bool_and(Solver::bool_not(lit0), lit2)
+        } else if lit0 == Solver::bool_not(lit2) || lit2 == Solver::TRUE {
+            self.bool_or(Solver::bool_not(lit0), lit1)
+        } else if lit0 == lit2 || lit2 == Solver::FALSE {
+            self.bool_and(lit0, lit1)
+        } else {
+            let lit3 = self.add_variable();
+            self.add_clause3(Solver::bool_not(lit0), Solver::bool_not(lit1), lit3);
+            self.add_clause3(Solver::bool_not(lit0), lit1, Solver::bool_not(lit3));
+            self.add_clause3(lit0, Solver::bool_not(lit2), lit3);
+            self.add_clause3(lit0, lit2, Solver::bool_not(lit3));
+            lit3
+        }
+    }
+
     /// Computes the conjunction of the elements.
     #[inline]
     pub fn fold_all<ITER>(&mut self, lits: ITER) -> i32
@@ -313,25 +373,142 @@ impl Solver {
         Solver::bool_not(min2)
     }
 
-    /// Returns true if the two sequences are equal.
-    pub fn comp_equ<ITER>(&mut self, lits0: ITER, lits1: ITER) -> i32
+    /// Returns true if the two sequences are equal. The two sequences
+    /// must have the same length.
+    pub fn comp_eq<ITER>(&mut self, lits0: ITER, lits1: ITER) -> i32
     where
         ITER: Iterator<Item = i32>,
     {
-        let mut result = Solver::TRUE;
+        let mut res = Solver::TRUE;
         for (a, b) in lits0.into_iter().zip(lits1.into_iter()) {
             let c = self.bool_equ(a, b);
-            result = self.bool_and(result, c);
+            res = self.bool_and(res, c);
         }
-        result
+        res
     }
 
-    /// Returns true if the two sequences are not equal.
-    pub fn comp_neq<ITER>(&mut self, lits0: ITER, lits1: ITER) -> i32
+    /// Returns true if the two sequences are not equal. The two sequences
+    /// must have the same length.
+    pub fn comp_ne<ITER>(&mut self, lits0: ITER, lits1: ITER) -> i32
     where
         ITER: Iterator<Item = i32>,
     {
-        Solver::bool_not(self.comp_equ(lits0, lits1))
+        Solver::bool_not(self.comp_eq(lits0, lits1))
+    }
+
+    /// Returns true if the first sequence is smaller than or equal to the
+    /// second one as a binary number when the least significant digit is
+    /// the first one. So [TRUE, FALSE] = 1 is smaller than [FALSE, TRUE] = 2.
+    /// The two sequences must have the same length.
+    pub fn comp_le<ITER>(&mut self, lits0: ITER, lits1: ITER) -> i32
+    where
+        ITER: Iterator<Item = i32>,
+    {
+        let mut res = Solver::TRUE;
+        for (a, b) in lits0.into_iter().zip(lits1.into_iter()) {
+            let c = self.bool_xor(a, b);
+            res = self.bool_iff(c, b, res);
+        }
+        res
+    }
+
+    /// Returns true if the first sequence is smaller than the second one.
+    /// The two sequences must have the same length.
+    pub fn comp_lt<ITER>(&mut self, lits0: ITER, lits1: ITER) -> i32
+    where
+        ITER: Iterator<Item = i32>,
+    {
+        Solver::bool_not(self.comp_le(lits1, lits0))
+    }
+
+    /// Returns true if the first sequence is greater than or equal to the
+    /// second one as a binary number when the least significant digit is the
+    /// first one. So [TRUE, FALSE] = 1 is not greater than [FALSE, TRUE] = 2.
+    /// The two sequences must have the same length.
+    pub fn comp_ge<ITER>(&mut self, lits0: ITER, lits1: ITER) -> i32
+    where
+        ITER: Iterator<Item = i32>,
+    {
+        let mut res = Solver::TRUE;
+        for (a, b) in lits0.into_iter().zip(lits1.into_iter()) {
+            let c = self.bool_xor(a, b);
+            res = self.bool_iff(c, a, res);
+        }
+        res
+    }
+
+    /// Returns true if the first sequence is greater than the second one.
+    /// The two sequences must have the same length.
+    pub fn comp_gt<ITER>(&mut self, lits0: ITER, lits1: ITER) -> i32
+    where
+        ITER: Iterator<Item = i32>,
+    {
+        Solver::bool_not(self.comp_ge(lits1, lits0))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn bool_op2(op: for<'a> fn(&'a mut Solver, i32, i32) -> i32, table: [bool; 4]) {
+        let lits = [1, -1, 2, -2, 3, -3];
+        for a in lits {
+            for b in lits {
+                let mut solver = Solver::new();
+                assert_eq!(solver.add_variable(), 2);
+                assert_eq!(solver.add_variable(), 3);
+                let c = op(&mut solver, a, b);
+                solver.add_clause1(2);
+                solver.add_clause1(3);
+                assert_eq!(solver.solve(), Some(true));
+                let a = solver.get_value(a).unwrap();
+                let b = solver.get_value(b).unwrap();
+                let c = solver.get_value(c).unwrap();
+                assert_eq!(c, table[2 * (a as usize) + (b as usize)]);
+            }
+        }
+    }
+
+    fn bool_op3(op: for<'a> fn(&'a mut Solver, i32, i32, i32) -> i32, table: [bool; 8]) {
+        let lits = [1, -1, 2, -2, 3, -3, 4, -4];
+        for a in lits {
+            for b in lits {
+                for c in lits {
+                    let mut solver = Solver::new();
+                    assert_eq!(solver.add_variable(), 2);
+                    assert_eq!(solver.add_variable(), 3);
+                    assert_eq!(solver.add_variable(), 4);
+                    let d = op(&mut solver, a, b, c);
+                    solver.add_clause1(2);
+                    solver.add_clause1(3);
+                    solver.add_clause1(4);
+                    assert_eq!(solver.solve(), Some(true));
+                    let a = solver.get_value(a).unwrap();
+                    let b = solver.get_value(b).unwrap();
+                    let c = solver.get_value(c).unwrap();
+                    let d = solver.get_value(d).unwrap();
+                    assert_eq!(d, table[4 * (a as usize) + 2 * (b as usize) + (c as usize)]);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn bool_ops() {
+        bool_op2(Solver::bool_or, [false, true, true, true]);
+        bool_op2(Solver::bool_and, [false, false, false, true]);
+        bool_op2(Solver::bool_imp, [true, true, false, true]);
+        bool_op2(Solver::bool_xor, [false, true, true, false]);
+        bool_op2(Solver::bool_equ, [true, false, false, true]);
+        bool_op3(
+            Solver::bool_maj,
+            [false, false, false, true, false, true, true, true],
+        );
+        bool_op3(
+            Solver::bool_iff,
+            [false, true, false, true, false, false, true, true],
+        );
     }
 }
 
@@ -340,6 +517,7 @@ impl Solver {
 #[pyclass(frozen, name = "Solver")]
 pub struct PySolver(Mutex<Solver>);
 
+#[allow(clippy::new_without_default)]
 #[pymethods]
 impl PySolver {
     /// Constructs a new solver instance. The literal 1 is always added
@@ -361,6 +539,7 @@ impl PySolver {
     }
 
     /// Returns the name and version of the CaDiCaL library.
+    #[getter]
     pub fn signature(&self) -> String {
         self.0.lock().unwrap().signature().into()
     }
@@ -372,6 +551,7 @@ impl PySolver {
     }
 
     /// Returns the number of variables in the solver.
+    #[getter]
     pub fn num_variables(&self) -> usize {
         self.0.lock().unwrap().num_variables()
     }
@@ -404,6 +584,7 @@ impl PySolver {
     }
 
     /// Returns the number of clauses in the solver.
+    #[getter]
     pub fn num_clauses(&self) -> usize {
         self.0.lock().unwrap().num_clauses()
     }
@@ -475,6 +656,16 @@ impl PySolver {
         self.0.lock().unwrap().bool_equ(lit0, lit1)
     }
 
+    /// Returns the majority of three elements.
+    pub fn bool_maj(&self, lit0: i32, lit1: i32, lit2: i32) -> i32 {
+        self.0.lock().unwrap().bool_maj(lit0, lit1, lit2)
+    }
+
+    /// Returns 'lit1' if 'lit0' is true, otherwise 'lit2' is returned.
+    pub fn bool_iff(&self, lit0: i32, lit1: i32, lit2: i32) -> i32 {
+        self.0.lock().unwrap().bool_iff(lit0, lit1, lit2)
+    }
+
     /// Computes the conjunction of the elements.
     pub fn fold_all(&self, lits: Vec<i32>) -> i32 {
         self.0.lock().unwrap().fold_all(lits.into_iter())
@@ -495,21 +686,91 @@ impl PySolver {
         self.0.lock().unwrap().fold_amo(lits.into_iter())
     }
 
-    /// Returns true if the two sequences are equal.
-    pub fn comp_equ(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> i32 {
-        assert_eq!(lits0.len(), lits1.len());
-        self.0
-            .lock()
-            .unwrap()
-            .comp_equ(lits0.into_iter(), lits1.into_iter())
+    /// Returns true if the two sequences are equal. The two sequences
+    /// must have the same length.
+    pub fn comp_eq(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
+        if lits0.len() != lits1.len() {
+            Err(PyValueError::new_err("length mismatch"))
+        } else {
+            Ok(self
+                .0
+                .lock()
+                .unwrap()
+                .comp_eq(lits0.into_iter(), lits1.into_iter()))
+        }
     }
 
-    /// Returns true if the two sequences are not equal.
-    pub fn comp_neq(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> i32 {
-        assert_eq!(lits0.len(), lits1.len());
-        self.0
-            .lock()
-            .unwrap()
-            .comp_neq(lits0.into_iter(), lits1.into_iter())
+    /// Returns true if the two sequences are not equal. The two sequences
+    /// must have the same length.
+    pub fn comp_ne(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
+        if lits0.len() != lits1.len() {
+            Err(PyValueError::new_err("length mismatch"))
+        } else {
+            Ok(self
+                .0
+                .lock()
+                .unwrap()
+                .comp_ne(lits0.into_iter(), lits1.into_iter()))
+        }
+    }
+
+    /// Returns true if the first sequence is smaller than or equal to the
+    /// second one as a binary number when the least significant digit is
+    /// the first one. So [TRUE, FALSE] = 1 is smaller than [FALSE, TRUE] = 2.
+    /// The two sequences must have the same length.
+    pub fn comp_le(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
+        if lits0.len() != lits1.len() {
+            Err(PyValueError::new_err("length mismatch"))
+        } else {
+            Ok(self
+                .0
+                .lock()
+                .unwrap()
+                .comp_le(lits0.into_iter(), lits1.into_iter()))
+        }
+    }
+
+    /// Returns true if the first sequence is smaller than the second one.
+    /// The two sequences must have the same length.
+    pub fn comp_lt(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
+        if lits0.len() != lits1.len() {
+            Err(PyValueError::new_err("length mismatch"))
+        } else {
+            Ok(self
+                .0
+                .lock()
+                .unwrap()
+                .comp_lt(lits0.into_iter(), lits1.into_iter()))
+        }
+    }
+
+    /// Returns true if the first sequence is greater than or equal to the
+    /// second one as a binary number when the least significant digit is the
+    /// first one. So [TRUE, FALSE] = 1 is not greater than [FALSE, TRUE] = 2.
+    /// The two sequences must have the same length.
+    pub fn comp_ge(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
+        if lits0.len() != lits1.len() {
+            Err(PyValueError::new_err("length mismatch"))
+        } else {
+            Ok(self
+                .0
+                .lock()
+                .unwrap()
+                .comp_ge(lits0.into_iter(), lits1.into_iter()))
+        }
+    }
+
+    /// Returns true if the first sequence is greater than the second one.
+    /// The two sequences must have the same length.
+    pub fn comp_gt(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
+        if lits0.len() != lits1.len() {
+            Err(PyValueError::new_err("length mismatch"))
+        } else {
+            Ok(self
+                .0
+                .lock()
+                .unwrap()
+                .comp_gt(lits0.into_iter(), lits1.into_iter()))
+        }
     }
 }

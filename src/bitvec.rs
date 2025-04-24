@@ -30,8 +30,8 @@ pub struct PyBitVec {
 impl PyBitVec {
     /// Creates a new bit vector with the associated solver and literals.
     #[new]
-    pub fn new<'py>(
-        py: Python<'py>,
+    pub fn new(
+        py: Python<'_>,
         solver: Option<Py<PySolver>>,
         literals: Vec<i32>,
     ) -> PyResult<Py<PyBitVec>> {
@@ -43,7 +43,7 @@ impl PyBitVec {
     /// `None``, then all literals are `TRUE`` or `FALSE``. Otherwise, the
     /// elements are literals of the solver and their value is not yet known.
     #[getter]
-    pub fn get_solver<'py>(me: &Bound<'py, Self>) -> Option<Py<PySolver>> {
+    pub fn get_solver(me: &Bound<'_, Self>) -> Option<Py<PySolver>> {
         me.get().solver.as_ref().map(|x| x.clone_ref(me.py()))
     }
 

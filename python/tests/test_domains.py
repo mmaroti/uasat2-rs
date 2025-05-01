@@ -13,15 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Test module docstring.
-"""
+from uasat import *
 
-from .uasat import *
-from .domain import *
 
-# __doc__ = uasat.__doc__
-# if hasattr(uasat, "__all__"):
-#     __all__ = uasat.__all__
+def test_bool():
+    solver = Solver()
+    elem0 = BOOLEAN.bool_lift(solver, True)
+    elem1 = BOOLEAN.bool_lift(solver, False)
+    elem2 = BOOLEAN.bool_and(elem0, elem1)
+    elem3 = BOOLEAN.comp_eq(elem2, elem1)
+    print(elem3.lits)
 
-__all__ = ["Solver", "BitVec", "Elem", "Domain", "BOOLEAN"]
+
+if __name__ == "__main__":
+    test_bool()

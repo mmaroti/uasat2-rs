@@ -13,15 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Test module docstring.
-"""
+from uasat import *
 
-from .uasat import *
-from .domain import *
 
-# __doc__ = uasat.__doc__
-# if hasattr(uasat, "__all__"):
-#     __all__ = uasat.__all__
+def test_signature():
+    solver = Solver()
+    assert solver.signature == "cadical-1.9.5"
 
-__all__ = ["Solver", "BitVec", "Elem", "Domain", "BOOLEAN"]
+
+def test_nosolver():
+    lit0 = Solver.TRUE
+    lit1 = Solver.FALSE
+    # lit2 = Solver.bool_and(None, lit0, lit1)

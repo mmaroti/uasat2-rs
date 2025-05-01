@@ -13,19 +13,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import List, Callable
 from typeguard import typechecked
 
 from .uasat import Solver
 
 
-@typechecked
-def join_solvers(sol1: Optional[Solver], sol2: Optional[Solver]) -> Optional[Solver]:
-    if sol2 is None:
-        return sol1
-    else:
-        assert sol1 is None or sol1 == sol2
-        return sol2
+class Elem:
+    @typechecked
+    def __init__(self, domain: 'Domain', solver: Solver, lits: List[int]):
+        assert domain.length == len(lits)
+        self.domain = domain
+        self.solver = solver
+        self.lits = lits
+
+    @property
+    @typechecked
+    def length(self) -> int:
+        return len(self.lits)
 
 
 class Domain:
@@ -33,96 +38,79 @@ class Domain:
     def __init__(self, length: int):
         self.length = length
 
-
-class Element:
     @typechecked
-    def __init__(self, domain: 'Domain', solver: Solver, literals: List[int]):
-        self.domain = domain
-        self.solver = solver
-        self.literals = literals
-
-    @property
-    @typechecked
-    def length(self) -> int:
-        return len(self.literals)
-
-    @typechecked
-    def __and__(self, other: 'Element') -> 'Element':
-        assert self.length == other.length
-
-
-class Operator:
-    @typechecked
-    def __init__(self, domains: List[Domain], codomain: Domain):
-        self.domains = domains
-        self.codomain = codomain
-
-    @property
-    @typechecked
-    def arity(self) -> int:
-        return len(self.domains)
-
-    @typechecked
-    def _get_solver(self, elems: List[Element]) -> Solver:
-        assert len(elems) == len(self.domains)
-        solver = None
-        for elem, dom in zip(elems, self.domains):
-            assert elem.length == dom.length
-            if solver is None:
-                solver = elem.solver
-            else:
-                assert solver == elem.solver
-        return solver
-
-    @typechecked
-    def evaluate(self, elems: List[Element]) -> Element:
+    def contains(self, elem: Elem) -> Elem:
         raise NotImplementedError()
 
+    @typechecked
+    def _comp(self, op: Callable[[Solver, Elem, Elem], Elem], elem0: Elem, elem1: Elem) -> Elem:
+        assert elem0.domain == self and elem1.domain == self \
+            and elem0.solver == elem1.solver
+        lit = op(elem0.solver, elem0.lits, elem1.lits)
+        return Elem(BOOLEAN, elem0.solver, [lit])
 
-BOOLEAN = Domain(1)
+    @typechecked
+    def comp_eq(self, elem0: Elem, elem1: Elem) -> Elem:
+        return self._comp(Solver.comp_eq, elem0, elem1)
+
+    @typechecked
+    def comp_le(self, elem0: Elem, elem1: Elem) -> Elem:
+        return self._comp(Solver.comp_le, elem0, elem1)
+
+    @typechecked
+    def comp_lt(self, elem0: Elem, elem1: Elem) -> Elem:
+        return self._comp(Solver.comp_lt, elem0, elem1)
+
+    @typechecked
+    def bool_iff(self, elem0: Elem, elem1: Elem, elem2: Elem) -> Elem:
+        assert elem0.domain == BOOLEAN \
+            and elem1.domain == self and elem2.domain == self \
+            and elem0.solver == elem1.solver == elem2.solver
+        test = elem0.lits[0]
+        lits = [elem0.solver.bool_iff(test, l1, l2)
+                for l1, l2 in zip(elem1.lits, elem2.lits)]
+        return Elem[self, elem0.solver, lits]
 
 
-class BooleanOp2(Operator):
-    def __init__(self, oper):
-        super().__init__([BOOLEAN, BOOLEAN], BOOLEAN)
-        self.oper = oper
-
-    def evaluate(self, elems: List[Element]) -> Element:
-        solver = self._get_solver(elems)
-
-
-BOOLEAN_AND = BooleanOp2(Solver.bool_and)
-
-
-class Boolean:
+class Boolean(Domain):
     def __init__(self):
         super().__init__(1)
 
-    def contains(self, elem: Element) -> Element:
-        assert self.compatible(elem)
-        return [elem.solver.bool_true()]
+    @typechecked
+    def bool_lift(self, solver: Solver, value: bool) -> Elem:
+        return Elem(self, solver, [Solver.bool_lift(value)])
 
-    def bool_and(self, elem0: Element, elem1: Element) -> Element:
-        elem2 = elem0.solver.bool_and(elem0.literals[0], elem1.literals[0])
-        return Element(self, elem0.solver, [elem2])
+    @typechecked
+    def bool_not(self, elem: Elem) -> Elem:
+        assert elem.domain == self
+        return Elem(self, elem.solver, Solver.bool_not(elem.lits[0]))
+
+    @typechecked
+    def _bool2(self, op: Callable[[Solver, int, int], int], elem0: Elem, elem1: Elem) -> Elem:
+        assert elem0.domain == self and elem1.domain == self \
+            and elem0.solver == elem1.solver
+        lit = op(elem0.solver, elem0.lits[0], elem1.lits[0])
+        return Elem(self, elem0.solver, [lit])
+
+    @typechecked
+    def bool_or(self, elem0: Elem, elem1: Elem) -> Elem:
+        return self._bool2(Solver.bool_or, elem0, elem1)
+
+    @typechecked
+    def bool_and(self, elem0: Elem, elem1: Elem) -> Elem:
+        return self._bool2(Solver.bool_and, elem0, elem1)
+
+    @typechecked
+    def bool_imp(self, elem0: Elem, elem1: Elem) -> Elem:
+        return self._bool2(Solver.bool_imp, elem0, elem1)
+
+    @typechecked
+    def bool_xor(self, elem0: Elem, elem1: Elem) -> Elem:
+        return self._bool2(Solver.bool_xor, elem0, elem1)
+
+    @typechecked
+    def bool_equ(self, elem0: Elem, elem1: Elem) -> Elem:
+        return self._bool2(Solver.bool_equ, elem0, elem1)
 
 
-class Fixed(Domain):
-    def __init__(self, size: int):
-        super().__init__(size)
-
-    def contains(self, elem: Element) -> Element:
-        return [elem.solver.fold_one(elem.literals)]
-
-
-class Product(Domain):
-    def __init__(self, factors: List[Domain]):
-        super().__init__(sum(f.length for f in factors))
-        self.factors = factors
-
-
-class Power(Domain):
-    def __init__(self, base: Domain, exponent: Domain):
-        super().__init__(base.num_bits ** exponent.num_bits)
-        self.base = base
-        self.exponent = exponent
+BOOLEAN = Boolean()

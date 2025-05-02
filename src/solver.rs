@@ -517,6 +517,13 @@ mod tests {
 #[pyclass(frozen, name = "Solver")]
 pub struct PySolver(Mutex<Solver>);
 
+impl PySolver {
+    #[inline]
+    pub fn lock(&self) -> std::sync::MutexGuard<'_, Solver> {
+        self.0.lock().unwrap()
+    }
+}
+
 #[allow(clippy::new_without_default)]
 #[pymethods]
 impl PySolver {
@@ -541,52 +548,52 @@ impl PySolver {
     /// Returns the name and version of the CaDiCaL library.
     #[getter]
     pub fn signature(&self) -> String {
-        self.0.lock().unwrap().signature().into()
+        self.lock().signature().into()
     }
 
     /// Adds a new variable to the solver and returns the corresponding
     /// literal as an integer.
     pub fn add_variable(&self) -> i32 {
-        self.0.lock().unwrap().add_variable()
+        self.lock().add_variable()
     }
 
     /// Returns the number of variables in the solver.
     #[getter]
     pub fn num_variables(&self) -> usize {
-        self.0.lock().unwrap().num_variables()
+        self.lock().num_variables()
     }
 
     /// Adds the given clause to the solver. Negated literals are negative
     /// integers, positive literals are positive ones. All literals must be
     /// non-zero.
     pub fn add_clause(&self, clause: Vec<i32>) {
-        self.0.lock().unwrap().add_clause(clause.into_iter())
+        self.lock().add_clause(clause.into_iter())
     }
 
     /// Adds the unary clause to the solver.
     pub fn add_clause1(&self, lit0: i32) {
-        self.0.lock().unwrap().add_clause1(lit0)
+        self.lock().add_clause1(lit0)
     }
 
     /// Adds the binary clause to the solver.
     pub fn add_clause2(&self, lit0: i32, lit1: i32) {
-        self.0.lock().unwrap().add_clause2(lit0, lit1)
+        self.lock().add_clause2(lit0, lit1)
     }
 
     /// Adds the ternary clause to the solver.
     pub fn add_clause3(&self, lit0: i32, lit1: i32, lit2: i32) {
-        self.0.lock().unwrap().add_clause3(lit0, lit1, lit2)
+        self.lock().add_clause3(lit0, lit1, lit2)
     }
 
     /// Adds the quaternary clause to the solver.
     pub fn add_clause4(&self, lit0: i32, lit1: i32, lit2: i32, lit3: i32) {
-        self.0.lock().unwrap().add_clause4(lit0, lit1, lit2, lit3)
+        self.lock().add_clause4(lit0, lit1, lit2, lit3)
     }
 
     /// Returns the number of clauses in the solver.
     #[getter]
     pub fn num_clauses(&self) -> usize {
-        self.0.lock().unwrap().num_clauses()
+        self.lock().num_clauses()
     }
 
     /// Solves the formula defined by the added clauses. If the formula is
@@ -594,13 +601,13 @@ impl PySolver {
     /// unsatisfiable, then `Some(false)` is returned. If the solver runs out
     /// of resources or was terminated, then `None` is returned.
     pub fn solve(&self) -> Option<bool> {
-        self.0.lock().unwrap().solve()
+        self.lock().solve()
     }
 
     /// Solves the formula defined by the set of clauses under the given
     /// assumptions.
     pub fn solve_with(&self, assumptions: Vec<i32>) -> Option<bool> {
-        self.0.lock().unwrap().solve_with(assumptions.into_iter())
+        self.lock().solve_with(assumptions.into_iter())
     }
 
     /// Returns the value of the given literal in the last solution. The
@@ -608,7 +615,7 @@ impl PySolver {
     /// `None` if the formula is satisfied regardless of the value of the
     /// literal.
     pub fn get_value(&self, literal: i32) -> Option<bool> {
-        self.0.lock().unwrap().get_value(literal)
+        self.lock().get_value(literal)
     }
 
     /// The always true literal.
@@ -633,57 +640,57 @@ impl PySolver {
 
     /// Returns the disjunction of a pair of elements.
     pub fn bool_or(&self, lit0: i32, lit1: i32) -> i32 {
-        self.0.lock().unwrap().bool_or(lit0, lit1)
+        self.lock().bool_or(lit0, lit1)
     }
 
     /// Computes the disjunction of the elements.
     pub fn bool_and(&self, lit0: i32, lit1: i32) -> i32 {
-        self.0.lock().unwrap().bool_and(lit0, lit1)
+        self.lock().bool_and(lit0, lit1)
     }
 
     /// Returns the logical implication of a pair of elements.
     pub fn bool_imp(&self, lit0: i32, lit1: i32) -> i32 {
-        self.0.lock().unwrap().bool_imp(lit0, lit1)
+        self.lock().bool_imp(lit0, lit1)
     }
 
     /// Returns the exclusive or of a pair of elements.
     pub fn bool_xor(&self, lit0: i32, lit1: i32) -> i32 {
-        self.0.lock().unwrap().bool_xor(lit0, lit1)
+        self.lock().bool_xor(lit0, lit1)
     }
 
     /// Returns the logical equivalence of a pair of elements.
     pub fn bool_equ(&self, lit0: i32, lit1: i32) -> i32 {
-        self.0.lock().unwrap().bool_equ(lit0, lit1)
+        self.lock().bool_equ(lit0, lit1)
     }
 
     /// Returns the majority of three elements.
     pub fn bool_maj(&self, lit0: i32, lit1: i32, lit2: i32) -> i32 {
-        self.0.lock().unwrap().bool_maj(lit0, lit1, lit2)
+        self.lock().bool_maj(lit0, lit1, lit2)
     }
 
     /// Returns 'lit1' if 'lit0' is true, otherwise 'lit2' is returned.
     pub fn bool_iff(&self, lit0: i32, lit1: i32, lit2: i32) -> i32 {
-        self.0.lock().unwrap().bool_iff(lit0, lit1, lit2)
+        self.lock().bool_iff(lit0, lit1, lit2)
     }
 
     /// Computes the conjunction of the elements.
     pub fn fold_all(&self, lits: Vec<i32>) -> i32 {
-        self.0.lock().unwrap().fold_all(lits.into_iter())
+        self.lock().fold_all(lits.into_iter())
     }
 
     /// Computes the disjunction of the elements.
     pub fn fold_any(&self, lits: Vec<i32>) -> i32 {
-        self.0.lock().unwrap().fold_any(lits.into_iter())
+        self.lock().fold_any(lits.into_iter())
     }
 
     /// Computes the exactly one predicate over the given elements.
     pub fn fold_one(&self, lits: Vec<i32>) -> i32 {
-        self.0.lock().unwrap().fold_one(lits.into_iter())
+        self.lock().fold_one(lits.into_iter())
     }
 
     /// Computes the at most one predicate over the given elements.
     pub fn fold_amo(&self, lits: Vec<i32>) -> i32 {
-        self.0.lock().unwrap().fold_amo(lits.into_iter())
+        self.lock().fold_amo(lits.into_iter())
     }
 
     /// Returns true if the two sequences are equal. The two sequences
@@ -692,11 +699,7 @@ impl PySolver {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
         } else {
-            Ok(self
-                .0
-                .lock()
-                .unwrap()
-                .comp_eq(lits0.into_iter(), lits1.into_iter()))
+            Ok(self.lock().comp_eq(lits0.into_iter(), lits1.into_iter()))
         }
     }
 
@@ -706,11 +709,7 @@ impl PySolver {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
         } else {
-            Ok(self
-                .0
-                .lock()
-                .unwrap()
-                .comp_ne(lits0.into_iter(), lits1.into_iter()))
+            Ok(self.lock().comp_ne(lits0.into_iter(), lits1.into_iter()))
         }
     }
 
@@ -722,11 +721,7 @@ impl PySolver {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
         } else {
-            Ok(self
-                .0
-                .lock()
-                .unwrap()
-                .comp_le(lits0.into_iter(), lits1.into_iter()))
+            Ok(self.lock().comp_le(lits0.into_iter(), lits1.into_iter()))
         }
     }
 
@@ -736,11 +731,7 @@ impl PySolver {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
         } else {
-            Ok(self
-                .0
-                .lock()
-                .unwrap()
-                .comp_lt(lits0.into_iter(), lits1.into_iter()))
+            Ok(self.lock().comp_lt(lits0.into_iter(), lits1.into_iter()))
         }
     }
 
@@ -752,11 +743,7 @@ impl PySolver {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
         } else {
-            Ok(self
-                .0
-                .lock()
-                .unwrap()
-                .comp_ge(lits0.into_iter(), lits1.into_iter()))
+            Ok(self.lock().comp_ge(lits0.into_iter(), lits1.into_iter()))
         }
     }
 
@@ -766,11 +753,7 @@ impl PySolver {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
         } else {
-            Ok(self
-                .0
-                .lock()
-                .unwrap()
-                .comp_gt(lits0.into_iter(), lits1.into_iter()))
+            Ok(self.lock().comp_gt(lits0.into_iter(), lits1.into_iter()))
         }
     }
 }

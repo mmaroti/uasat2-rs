@@ -43,6 +43,10 @@ class Domain:
         raise NotImplementedError()
 
     @typechecked
+    def decode(self, elem: Elem) -> str:
+        raise NotImplementedError()
+
+    @typechecked
     def _comp(self, op: Callable[[Solver, Elem, Elem], Elem], elem0: Elem, elem1: Elem) -> Elem:
         assert elem0.domain == self and elem1.domain == self \
             and elem0.solver == elem1.solver
@@ -75,6 +79,22 @@ class Domain:
 class Boolean(Domain):
     def __init__(self):
         super().__init__(1)
+
+    @typechecked
+    def contains(self, elem: Elem) -> Elem:
+        assert elem.domain == self
+        return Elem(self, elem.solver, Solver.TRUE)
+
+    @typechecked
+    def decode(self, elem: Elem) -> str:
+        assert elem.domain == self
+        lit = elem.lits[0]
+        if lit == Solver.TRUE:
+            return "1"
+        elif lit == Solver.FALSE:
+            return "0"
+        else:
+            raise ValueError("invalid elem")
 
     @typechecked
     def bool_lift(self, solver: Solver, value: bool) -> Elem:
@@ -114,3 +134,30 @@ class Boolean(Domain):
 
 
 BOOLEAN = Boolean()
+
+
+class SmallSet(Domain):
+    @typechecked
+    def __init__(self, size: int):
+        super().__init__(size)
+        self.size = size
+
+    @typechecked
+    def contains(self, elem: Elem) -> Elem:
+        assert elem.domain == self
+        lit = elem.solver.fold_one(elem.lits)
+        return Elem(BOOLEAN, elem.solver, [lit])
+
+    @typechecked
+    def decode(self, elem: Elem) -> str:
+        assert elem.domain == self
+        val = None
+        for i in range(self.size):
+            if elem.lits[i] == Solver.TRUE:
+                assert val is None
+                val = i
+            else:
+                assert elem.lits[i] == Solver.FALSE
+        if val is None:
+            raise ValueError("invalid elem")
+        return str(val)

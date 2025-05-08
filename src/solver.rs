@@ -21,11 +21,11 @@ use std::sync::Mutex;
 use std::time::{Duration, SystemTime};
 
 /// Helper structure to check for python signals.
-struct CheckSig {
+struct CheckSignal {
     last: SystemTime,
 }
 
-impl CheckSig {
+impl CheckSignal {
     fn new() -> Self {
         Self {
             last: SystemTime::now(),
@@ -33,7 +33,7 @@ impl CheckSig {
     }
 }
 
-impl cadical::Callbacks for CheckSig {
+impl cadical::Callbacks for CheckSignal {
     fn terminate(&mut self) -> bool {
         let now = SystemTime::now();
         if now
@@ -51,7 +51,7 @@ impl cadical::Callbacks for CheckSig {
 /// The CaDiCaL incremental SAT solver. The literals are unwrapped positive
 /// and negative integers, exactly as in the DIMACS format.
 pub struct Solver {
-    solver: cadical::Solver<CheckSig>,
+    solver: cadical::Solver<CheckSignal>,
     num_vars: i32,
 }
 
@@ -61,7 +61,7 @@ impl Solver {
     /// by default to the solver and serves as the true value.
     pub fn new() -> Self {
         let mut solver = cadical::Solver::new();
-        solver.set_callbacks(Some(CheckSig::new()));
+        solver.set_callbacks(Some(CheckSignal::new()));
         solver.add_clause([1]);
         Self {
             solver,
@@ -75,14 +75,15 @@ impl Solver {
     /// * `plain`: disable all internal preprocessing options
     /// * `sat`: set internal options to target satisfiable instances
     /// * `unsat`: set internal options to target unsatisfiable instances
-    pub fn with_config(config: &str) -> Self {
-        let mut solver = cadical::Solver::with_config(config).unwrap();
-        solver.set_callbacks(Some(CheckSig::new()));
+    pub fn with_config(config: &str) -> PyResult<Self> {
+        let mut solver =
+            cadical::Solver::with_config(config).map_err(|e| PyValueError::new_err(e.msg))?;
+        solver.set_callbacks(Some(CheckSignal::new()));
         solver.add_clause([1]);
-        Self {
+        Ok(Self {
             solver,
             num_vars: 1,
-        }
+        })
     }
 
     /// Returns the name and version of the CaDiCaL library.
@@ -541,8 +542,8 @@ impl PySolver {
     /// * `sat`: set internal options to target satisfiable instances
     /// * `unsat`: set internal options to target unsatisfiable instances
     #[staticmethod]
-    pub fn with_config(config: &str) -> Self {
-        Self(Mutex::new(Solver::with_config(config)))
+    pub fn with_config(config: &str) -> PyResult<Self> {
+        Ok(Self(Mutex::new(Solver::with_config(config)?)))
     }
 
     /// Returns the name and version of the CaDiCaL library.

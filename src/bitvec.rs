@@ -220,4 +220,74 @@ impl PyBitVec {
         res.literals = vec![lit].into_boxed_slice();
         Ok(res)
     }
+
+    pub fn __le__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+        let solver = get_solver(me.py(), &[&me.get().solver, &other.solver])?;
+        if me.get().literals.len() != other.literals.len() {
+            return Err(PyValueError::new_err("length mismatch"));
+        }
+
+        let mut lit;
+        if let Some(s) = solver.as_ref() {
+            let mut solver = s.get().lock();
+            lit = solver.comp_le(
+                me.get().literals.iter().copied(),
+                other.literals.iter().copied(),
+            );
+        } else {
+            lit = PySolver::TRUE;
+            for (&a, &b) in me.get().literals.iter().zip(other.literals.iter()) {
+                debug_assert!(a == PySolver::TRUE || a == PySolver::FALSE);
+                debug_assert!(b == PySolver::TRUE || b == PySolver::FALSE);
+                if a != b {
+                    lit = b;
+                }
+            }
+        }
+
+        let literals = vec![lit].into_boxed_slice();
+        Ok(PyBitVec { solver, literals })
+    }
+
+    pub fn __gt__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+        let mut res = Self::__le__(me, other)?;
+        let lit = PySolver::bool_not(res.literals[0]);
+        res.literals = vec![lit].into_boxed_slice();
+        Ok(res)
+    }
+
+    pub fn __ge__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+        let solver = get_solver(me.py(), &[&me.get().solver, &other.solver])?;
+        if me.get().literals.len() != other.literals.len() {
+            return Err(PyValueError::new_err("length mismatch"));
+        }
+
+        let mut lit;
+        if let Some(s) = solver.as_ref() {
+            let mut solver = s.get().lock();
+            lit = solver.comp_ge(
+                me.get().literals.iter().copied(),
+                other.literals.iter().copied(),
+            );
+        } else {
+            lit = PySolver::TRUE;
+            for (&a, &b) in me.get().literals.iter().zip(other.literals.iter()) {
+                debug_assert!(a == PySolver::TRUE || a == PySolver::FALSE);
+                debug_assert!(b == PySolver::TRUE || b == PySolver::FALSE);
+                if a != b {
+                    lit = a;
+                }
+            }
+        }
+
+        let literals = vec![lit].into_boxed_slice();
+        Ok(PyBitVec { solver, literals })
+    }
+
+    pub fn __lt__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+        let mut res = Self::__ge__(me, other)?;
+        let lit = PySolver::bool_not(res.literals[0]);
+        res.literals = vec![lit].into_boxed_slice();
+        Ok(res)
+    }
 }

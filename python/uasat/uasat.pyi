@@ -223,3 +223,99 @@ class Solver(object):
         Returns true if the first sequence is greater than the second one.
         The two sequences must have the same length.
         """
+
+
+class BitVec(object):
+    """
+    A vector of literals of a solver. If the solver is None, then all literals
+    are either TRUE or FALSE. Otherwise, the value of the literals are not yet
+    known.
+    """
+
+    @property
+    def solver(self) -> Optional[Solver]:
+        """
+        Returns the solver whose literals this vector contains. If the solver
+        is None, then all literals are either TRUE or FALSE.
+        """
+
+    @property
+    def literals(self) -> List[int]:
+        """
+        Returns a copy of this vector as a python list. Generally you should
+        not use this method as you can index and use this class as a regular
+        list.
+        """
+
+    def __len__(self) -> int:
+        """
+        Returns the length of the vector.
+        """
+
+    def __getitem__(self, index: int) -> int:
+        """
+        Returns the given literal in this vector.
+        """
+
+    def __invert__(self) -> 'BitVec':
+        """
+        Negates all literals of this vector.
+        """
+
+    def __and__(self, other: 'BitVec') -> 'BitVec':
+        """
+        Returns the element wise logical and of this vector and another one
+        of the same length.
+        """
+
+    def __or__(self, other: 'BitVec') -> 'BitVec':
+        """
+        Returns the element wise logical or of this vector and another one
+        of the same length.
+        """
+
+    def __xor__(self, other: 'BitVec') -> 'BitVec':
+        """
+        Returns the element wise logical xor of this vector and another one
+        of the same length.
+        """
+
+    def __eq__(self, other: 'BitVec') -> 'BitVec':
+        """
+        Compares this vector with another one of the same length and returns
+        TRUE in a single element vector if the two are equal.
+        """
+
+    def __ne__(self, other: 'BitVec') -> 'BitVec':
+        """
+        Compares this vector with another one of the same length and returns
+        TRUE in a single element vector if the two are not equal.
+        """
+
+    def __le__(self, other: 'BitVec') -> 'BitVec':
+        """
+        Compares this vector with another one of the same length and returns
+        TRUE in a single element vector if the first is less than or equal
+        to the other one as seen as a binary number in little endian order.
+        """
+
+    def __lt__(self, other: 'BitVec') -> 'BitVec':
+        """
+        Compares this vector with another one of the same length and returns
+        TRUE in a single element vector if the first is less than the other
+        one as seen as a binary number in little endian order.
+        """
+
+    def __ge__(self, other: 'BitVec') -> 'BitVec':
+        """
+        Compares this vector with another one of the same length and returns
+        TRUE in a single element vector if the first is greater than or equal
+        to the other one as seen as a binary number in little endian order.
+        """
+
+    def __gt__(self, other: 'BitVec') -> 'BitVec':
+        """
+        Compares this vector with another one of the same length and returns
+        TRUE in a single element vector if the first is greater than the other
+        one as seen as a binary number in little endian order.
+        """

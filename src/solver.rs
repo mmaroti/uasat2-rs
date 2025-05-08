@@ -15,7 +15,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyNotImplementedError, PyValueError};
 use pyo3::prelude::*;
 use std::sync::Mutex;
 use std::time::{Duration, SystemTime};
@@ -516,12 +516,12 @@ mod tests {
 /// The CaDiCaL incremental SAT solver. The literals are unwrapped positive
 /// and negative integers, exactly as in the DIMACS format.
 #[pyclass(frozen, name = "Solver")]
-pub struct PySolver(Mutex<Solver>);
+pub struct PySolver(Option<Mutex<Solver>>);
 
 impl PySolver {
     #[inline]
     pub fn lock(&self) -> std::sync::MutexGuard<'_, Solver> {
-        self.0.lock().unwrap()
+        self.0.as_ref().unwrap().lock().unwrap()
     }
 }
 
@@ -532,7 +532,7 @@ impl PySolver {
     /// by default to the solver and serves as the true value.
     #[new]
     pub fn new() -> Self {
-        Self(Mutex::new(Solver::new()))
+        Self(Some(Mutex::new(Solver::new())))
     }
 
     /// Constructs a new solver with one of the following pre-defined
@@ -543,66 +543,111 @@ impl PySolver {
     /// * `unsat`: set internal options to target unsatisfiable instances
     #[staticmethod]
     pub fn with_config(config: &str) -> PyResult<Self> {
-        Ok(Self(Mutex::new(Solver::with_config(config)?)))
+        Ok(Self(Some(Mutex::new(Solver::with_config(config)?))))
     }
 
     /// Returns the name and version of the CaDiCaL library.
     #[getter]
     pub fn signature(&self) -> String {
-        self.lock().signature().into()
+        if self.0.is_none() {
+            "calculator".into()
+        } else {
+            self.lock().signature().into()
+        }
     }
+
+    /// A static instance that is not backed by a SAT solver, it simply
+    /// calculates the required boolean operation.
+    #[classattr]
+    pub const CALCULATOR: PySolver = PySolver(None);
 
     /// Adds a new variable to the solver and returns the corresponding
     /// literal as an integer.
-    pub fn add_variable(&self) -> i32 {
-        self.lock().add_variable()
+    pub fn add_variable(&self) -> PyResult<i32> {
+        if self.0.is_none() {
+            Err(PyNotImplementedError::new_err("calculator instance"))
+        } else {
+            Ok(self.lock().add_variable())
+        }
     }
 
     /// Returns the number of variables in the solver.
     #[getter]
     pub fn num_variables(&self) -> usize {
-        self.lock().num_variables()
+        if self.0.is_none() {
+            0
+        } else {
+            self.lock().num_variables()
+        }
     }
 
     /// Adds the given clause to the solver. Negated literals are negative
     /// integers, positive literals are positive ones. All literals must be
     /// non-zero.
-    pub fn add_clause(&self, clause: Vec<i32>) {
-        self.lock().add_clause(clause.into_iter())
+    pub fn add_clause(&self, clause: Vec<i32>) -> PyResult<()> {
+        if self.0.is_none() {
+            Err(PyNotImplementedError::new_err("calculator instance"))
+        } else {
+            Ok(self.lock().add_clause(clause.into_iter()))
+        }
     }
 
     /// Adds the unary clause to the solver.
-    pub fn add_clause1(&self, lit0: i32) {
-        self.lock().add_clause1(lit0)
+    pub fn add_clause1(&self, lit0: i32) -> PyResult<()> {
+        if self.0.is_none() {
+            Err(PyNotImplementedError::new_err("calculator instance"))
+        } else {
+            Ok(self.lock().add_clause1(lit0))
+        }
     }
 
     /// Adds the binary clause to the solver.
-    pub fn add_clause2(&self, lit0: i32, lit1: i32) {
-        self.lock().add_clause2(lit0, lit1)
+    pub fn add_clause2(&self, lit0: i32, lit1: i32) -> PyResult<()> {
+        if self.0.is_none() {
+            Err(PyNotImplementedError::new_err("calculator instance"))
+        } else {
+            Ok(self.lock().add_clause2(lit0, lit1))
+        }
     }
 
     /// Adds the ternary clause to the solver.
-    pub fn add_clause3(&self, lit0: i32, lit1: i32, lit2: i32) {
-        self.lock().add_clause3(lit0, lit1, lit2)
+    pub fn add_clause3(&self, lit0: i32, lit1: i32, lit2: i32) -> PyResult<()> {
+        if self.0.is_none() {
+            Err(PyNotImplementedError::new_err("calculator instance"))
+        } else {
+            Ok(self.lock().add_clause3(lit0, lit1, lit2))
+        }
     }
 
     /// Adds the quaternary clause to the solver.
-    pub fn add_clause4(&self, lit0: i32, lit1: i32, lit2: i32, lit3: i32) {
-        self.lock().add_clause4(lit0, lit1, lit2, lit3)
+    pub fn add_clause4(&self, lit0: i32, lit1: i32, lit2: i32, lit3: i32) -> PyResult<()> {
+        if self.0.is_none() {
+            Err(PyNotImplementedError::new_err("calculator instance"))
+        } else {
+            Ok(self.lock().add_clause4(lit0, lit1, lit2, lit3))
+        }
     }
 
     /// Returns the number of clauses in the solver.
     #[getter]
     pub fn num_clauses(&self) -> usize {
-        self.lock().num_clauses()
+        if self.0.is_none() {
+            0
+        } else {
+            self.lock().num_clauses()
+        }
     }
 
     /// Solves the formula defined by the added clauses. If the formula is
     /// satisfiable, then `Some(true)` is returned. If the formula is
     /// unsatisfiable, then `Some(false)` is returned. If the solver runs out
     /// of resources or was terminated, then `None` is returned.
-    pub fn solve(&self) -> Option<bool> {
-        self.lock().solve()
+    pub fn solve(&self) -> PyResult<Option<bool>> {
+        if self.0.is_none() {
+            Err(PyNotImplementedError::new_err("calculator instance"))
+        } else {
+            Ok(self.lock().solve())
+        }
     }
 
     /// Solves the formula defined by the set of clauses under the given

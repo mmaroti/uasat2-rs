@@ -26,6 +26,40 @@ def test_signature():
     assert solver.signature == "cadical-1.9.5"
 
 
+def test_static():
+    solver = Solver()
+    calc = Solver.CALCULATOR
+
+    for a in [Solver.FALSE, Solver.TRUE]:
+        assert solver.bool_not(a) == calc.bool_not(a)
+        for b in [Solver.FALSE, Solver.TRUE]:
+            assert solver.bool_and(a, b) == calc.bool_and(a, b)
+            assert solver.bool_or(a, b) == calc.bool_or(a, b)
+            assert solver.bool_imp(a, b) == calc.bool_imp(a, b)
+            assert solver.bool_xor(a, b) == calc.bool_xor(a, b)
+            assert solver.bool_equ(a, b) == calc.bool_equ(a, b)
+            for c in [Solver.FALSE, Solver.TRUE]:
+                assert solver.bool_maj(a, b, c) == calc.bool_maj(a, b, c)
+                assert solver.bool_iff(a, b, c) == calc.bool_iff(a, b, c)
+                assert solver.fold_all([a, b, c]) == calc.fold_all([a, b, c])
+                assert solver.fold_any([a, b, c]) == calc.fold_any([a, b, c])
+                assert solver.fold_one([a, b, c]) == calc.fold_one([a, b, c])
+                assert solver.fold_amo([a, b, c]) == calc.fold_amo([a, b, c])
+                for d in [Solver.FALSE, Solver.TRUE]:
+                    assert solver.comp_eq(
+                        [a, b], [c, d]) == calc.comp_eq([a, b], [c, d])
+                    assert solver.comp_ne(
+                        [a, b], [c, d]) == calc.comp_ne([a, b], [c, d])
+                    assert solver.comp_le(
+                        [a, b], [c, d]) == calc.comp_le([a, b], [c, d])
+                    assert solver.comp_lt(
+                        [a, b], [c, d]) == calc.comp_lt([a, b], [c, d])
+                    assert solver.comp_ge(
+                        [a, b], [c, d]) == calc.comp_ge([a, b], [c, d])
+                    assert solver.comp_gt(
+                        [a, b], [c, d]) == calc.comp_gt([a, b], [c, d])
+
+
 def test_bitvec():
     """
     We are checking if the operations defined in the Solver and those defined

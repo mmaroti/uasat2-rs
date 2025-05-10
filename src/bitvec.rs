@@ -115,7 +115,7 @@ impl PyBitVec {
         let mut literals = Vec::with_capacity(me.get().literals.len());
 
         if let Some(s) = solver.as_ref() {
-            let mut solver = s.get().lock();
+            let mut solver = s.get().lock().unwrap();
             for (&a, &b) in me.get().literals.iter().zip(other.literals.iter()) {
                 literals.push(solver.bool_and(a, b));
             }
@@ -142,7 +142,7 @@ impl PyBitVec {
         let mut literals = Vec::with_capacity(me.get().literals.len());
 
         if let Some(s) = solver.as_ref() {
-            let mut solver = s.get().lock();
+            let mut solver = s.get().lock().unwrap();
             for (&a, &b) in me.get().literals.iter().zip(other.literals.iter()) {
                 literals.push(solver.bool_or(a, b));
             }
@@ -169,7 +169,7 @@ impl PyBitVec {
         let mut literals = Vec::with_capacity(me.get().literals.len());
 
         if let Some(s) = solver.as_ref() {
-            let mut solver = s.get().lock();
+            let mut solver = s.get().lock().unwrap();
             for (&a, &b) in me.get().literals.iter().zip(other.literals.iter()) {
                 literals.push(solver.bool_xor(a, b));
             }
@@ -193,7 +193,7 @@ impl PyBitVec {
 
         let mut lit;
         if let Some(s) = solver.as_ref() {
-            let mut solver = s.get().lock();
+            let mut solver = s.get().lock().unwrap();
             lit = solver.comp_eq(
                 me.get().literals.iter().copied(),
                 other.literals.iter().copied(),
@@ -229,7 +229,7 @@ impl PyBitVec {
 
         let mut lit;
         if let Some(s) = solver.as_ref() {
-            let mut solver = s.get().lock();
+            let mut solver = s.get().lock().unwrap();
             lit = solver.comp_le(
                 me.get().literals.iter().copied(),
                 other.literals.iter().copied(),
@@ -264,7 +264,7 @@ impl PyBitVec {
 
         let mut lit;
         if let Some(s) = solver.as_ref() {
-            let mut solver = s.get().lock();
+            let mut solver = s.get().lock().unwrap();
             lit = solver.comp_ge(
                 me.get().literals.iter().copied(),
                 other.literals.iter().copied(),

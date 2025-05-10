@@ -21,8 +21,8 @@ def test_bool():
     elem0 = BOOLEAN.bool_lift(solver, True)
     elem1 = BOOLEAN.bool_lift(solver, False)
     elem2 = BOOLEAN.bool_and(elem0, elem1)
-    elem3 = BOOLEAN.comp_eq(elem2, elem1)
-    print(elem3.lits)
+    # elem3 = BOOLEAN.comp_eq(elem2, elem1)
+    # print(elem3.lits)
 
 
 if __name__ == "__main__":

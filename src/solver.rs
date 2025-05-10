@@ -17,7 +17,7 @@
 
 use pyo3::exceptions::{PyNotImplementedError, PyValueError};
 use pyo3::prelude::*;
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, SystemTime};
 
 /// Helper structure to check for python signals.
@@ -52,7 +52,6 @@ impl cadical::Callbacks for CheckSignal {
 /// and negative integers, exactly as in the DIMACS format.
 pub struct Solver {
     solver: cadical::Solver<CheckSignal>,
-    num_vars: i32,
 }
 
 #[allow(clippy::new_without_default)]
@@ -62,11 +61,9 @@ impl Solver {
     pub fn new() -> Self {
         let mut solver = cadical::Solver::new();
         solver.set_callbacks(Some(CheckSignal::new()));
+        solver.reserve(1);
         solver.add_clause([1]);
-        Self {
-            solver,
-            num_vars: 1,
-        }
+        Self { solver }
     }
 
     /// Constructs a new solver with one of the following pre-defined
@@ -75,15 +72,12 @@ impl Solver {
     /// * `plain`: disable all internal preprocessing options
     /// * `sat`: set internal options to target satisfiable instances
     /// * `unsat`: set internal options to target unsatisfiable instances
-    pub fn with_config(config: &str) -> PyResult<Self> {
-        let mut solver =
-            cadical::Solver::with_config(config).map_err(|e| PyValueError::new_err(e.msg))?;
+    pub fn with_config(config: &str) -> Result<Self, cadical::Error> {
+        let mut solver = cadical::Solver::with_config(config)?;
         solver.set_callbacks(Some(CheckSignal::new()));
+        solver.reserve(1);
         solver.add_clause([1]);
-        Ok(Self {
-            solver,
-            num_vars: 1,
-        })
+        Ok(Self { solver })
     }
 
     /// Returns the name and version of the CaDiCaL library.
@@ -96,14 +90,15 @@ impl Solver {
     /// literal as an integer.
     #[inline]
     pub fn add_variable(&mut self) -> i32 {
-        self.num_vars += 1;
-        self.num_vars
+        let var = self.solver.max_variable() + 1;
+        self.solver.reserve(var);
+        var
     }
 
     /// Returns the number of variables in the solver.
     #[inline]
     pub fn num_variables(&self) -> usize {
-        self.num_vars as usize
+        self.solver.max_variable() as usize
     }
 
     /// Adds the given clause to the solver. Negated literals are negative
@@ -520,8 +515,13 @@ pub struct PySolver(Option<Mutex<Solver>>);
 
 impl PySolver {
     #[inline]
-    pub fn lock(&self) -> std::sync::MutexGuard<'_, Solver> {
-        self.0.as_ref().unwrap().lock().unwrap()
+    pub fn is_const(lit: i32) -> bool {
+        lit == Self::TRUE || lit == Self::FALSE
+    }
+
+    #[inline]
+    pub fn lock(&self) -> Option<MutexGuard<'_, Solver>> {
+        self.0.as_ref().map(|a| a.lock().unwrap())
     }
 }
 
@@ -543,16 +543,17 @@ impl PySolver {
     /// * `unsat`: set internal options to target unsatisfiable instances
     #[staticmethod]
     pub fn with_config(config: &str) -> PyResult<Self> {
-        Ok(Self(Some(Mutex::new(Solver::with_config(config)?))))
+        let solver = Solver::with_config(config).map_err(|e| PyValueError::new_err(e.msg))?;
+        Ok(Self(Some(Mutex::new(solver))))
     }
 
     /// Returns the name and version of the CaDiCaL library.
     #[getter]
     pub fn signature(&self) -> String {
-        if self.0.is_none() {
-            "calculator".into()
+        if let Some(s) = self.lock() {
+            s.signature().into()
         } else {
-            self.lock().signature().into()
+            "calculator".into()
         }
     }
 
@@ -564,20 +565,20 @@ impl PySolver {
     /// Adds a new variable to the solver and returns the corresponding
     /// literal as an integer.
     pub fn add_variable(&self) -> PyResult<i32> {
-        if self.0.is_none() {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+        if let Some(mut s) = self.lock() {
+            Ok(s.add_variable())
         } else {
-            Ok(self.lock().add_variable())
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
     /// Returns the number of variables in the solver.
     #[getter]
     pub fn num_variables(&self) -> usize {
-        if self.0.is_none() {
-            0
+        if let Some(s) = self.lock() {
+            s.num_variables()
         } else {
-            self.lock().num_variables()
+            0
         }
     }
 
@@ -585,56 +586,56 @@ impl PySolver {
     /// integers, positive literals are positive ones. All literals must be
     /// non-zero.
     pub fn add_clause(&self, clause: Vec<i32>) -> PyResult<()> {
-        if self.0.is_none() {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+        if let Some(mut s) = self.lock() {
+            Ok(s.add_clause(clause.into_iter()))
         } else {
-            Ok(self.lock().add_clause(clause.into_iter()))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
     /// Adds the unary clause to the solver.
     pub fn add_clause1(&self, lit0: i32) -> PyResult<()> {
-        if self.0.is_none() {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+        if let Some(mut s) = self.lock() {
+            Ok(s.add_clause1(lit0))
         } else {
-            Ok(self.lock().add_clause1(lit0))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
     /// Adds the binary clause to the solver.
     pub fn add_clause2(&self, lit0: i32, lit1: i32) -> PyResult<()> {
-        if self.0.is_none() {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+        if let Some(mut s) = self.lock() {
+            Ok(s.add_clause2(lit0, lit1))
         } else {
-            Ok(self.lock().add_clause2(lit0, lit1))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
     /// Adds the ternary clause to the solver.
     pub fn add_clause3(&self, lit0: i32, lit1: i32, lit2: i32) -> PyResult<()> {
-        if self.0.is_none() {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+        if let Some(mut s) = self.lock() {
+            Ok(s.add_clause3(lit0, lit1, lit2))
         } else {
-            Ok(self.lock().add_clause3(lit0, lit1, lit2))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
     /// Adds the quaternary clause to the solver.
     pub fn add_clause4(&self, lit0: i32, lit1: i32, lit2: i32, lit3: i32) -> PyResult<()> {
-        if self.0.is_none() {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+        if let Some(mut s) = self.lock() {
+            Ok(s.add_clause4(lit0, lit1, lit2, lit3))
         } else {
-            Ok(self.lock().add_clause4(lit0, lit1, lit2, lit3))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
     /// Returns the number of clauses in the solver.
     #[getter]
     pub fn num_clauses(&self) -> usize {
-        if self.0.is_none() {
-            0
+        if let Some(s) = self.lock() {
+            s.num_clauses()
         } else {
-            self.lock().num_clauses()
+            0
         }
     }
 
@@ -643,25 +644,35 @@ impl PySolver {
     /// unsatisfiable, then `Some(false)` is returned. If the solver runs out
     /// of resources or was terminated, then `None` is returned.
     pub fn solve(&self) -> PyResult<Option<bool>> {
-        if self.0.is_none() {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+        if let Some(mut s) = self.lock() {
+            Ok(s.solve())
         } else {
-            Ok(self.lock().solve())
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
     /// Solves the formula defined by the set of clauses under the given
     /// assumptions.
-    pub fn solve_with(&self, assumptions: Vec<i32>) -> Option<bool> {
-        self.lock().solve_with(assumptions.into_iter())
+    pub fn solve_with(&self, assumptions: Vec<i32>) -> PyResult<Option<bool>> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.solve_with(assumptions.into_iter()))
+        } else {
+            Err(PyNotImplementedError::new_err("calculator instance"))
+        }
     }
 
     /// Returns the value of the given literal in the last solution. The
     /// state of the solver must be `Some(true)`. The returned value is
     /// `None` if the formula is satisfied regardless of the value of the
     /// literal.
-    pub fn get_value(&self, literal: i32) -> Option<bool> {
-        self.lock().get_value(literal)
+    pub fn get_value(&self, literal: i32) -> PyResult<Option<bool>> {
+        if let Some(s) = self.lock() {
+            Ok(s.get_value(literal))
+        } else if Self::is_const(literal) {
+            Ok(Some(literal == Self::TRUE))
+        } else {
+            Err(PyValueError::new_err("unexpected literal"))
+        }
     }
 
     /// The always true literal.
@@ -685,58 +696,158 @@ impl PySolver {
     }
 
     /// Returns the disjunction of a pair of elements.
-    pub fn bool_or(&self, lit0: i32, lit1: i32) -> i32 {
-        self.lock().bool_or(lit0, lit1)
+    pub fn bool_or(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.bool_or(lit0, lit1))
+        } else if Self::is_const(lit0) && Self::is_const(lit1) {
+            Ok(Self::bool_lift(lit0 == Self::TRUE || lit1 == Self::TRUE))
+        } else {
+            Err(PyValueError::new_err("unexpected literal"))
+        }
     }
 
     /// Computes the disjunction of the elements.
-    pub fn bool_and(&self, lit0: i32, lit1: i32) -> i32 {
-        self.lock().bool_and(lit0, lit1)
+    pub fn bool_and(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.bool_and(lit0, lit1))
+        } else if Self::is_const(lit0) && Self::is_const(lit1) {
+            Ok(Self::bool_lift(lit0 == Self::TRUE && lit1 == Self::TRUE))
+        } else {
+            Err(PyValueError::new_err("unexpected literal"))
+        }
     }
 
     /// Returns the logical implication of a pair of elements.
-    pub fn bool_imp(&self, lit0: i32, lit1: i32) -> i32 {
-        self.lock().bool_imp(lit0, lit1)
+    pub fn bool_imp(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.bool_imp(lit0, lit1))
+        } else if Self::is_const(lit0) && Self::is_const(lit1) {
+            Ok(Self::bool_lift(lit0 != Self::TRUE || lit1 == Self::TRUE))
+        } else {
+            Err(PyValueError::new_err("unexpected literal"))
+        }
     }
 
     /// Returns the exclusive or of a pair of elements.
-    pub fn bool_xor(&self, lit0: i32, lit1: i32) -> i32 {
-        self.lock().bool_xor(lit0, lit1)
+    pub fn bool_xor(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.bool_xor(lit0, lit1))
+        } else if Self::is_const(lit0) && Self::is_const(lit1) {
+            Ok(Self::bool_lift(lit0 != lit1))
+        } else {
+            Err(PyValueError::new_err("unexpected literal"))
+        }
     }
 
     /// Returns the logical equivalence of a pair of elements.
-    pub fn bool_equ(&self, lit0: i32, lit1: i32) -> i32 {
-        self.lock().bool_equ(lit0, lit1)
+    pub fn bool_equ(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.bool_equ(lit0, lit1))
+        } else if Self::is_const(lit0) && Self::is_const(lit1) {
+            Ok(Self::bool_lift(lit0 == lit1))
+        } else {
+            Err(PyValueError::new_err("unexpected literal"))
+        }
     }
 
     /// Returns the majority of three elements.
-    pub fn bool_maj(&self, lit0: i32, lit1: i32, lit2: i32) -> i32 {
-        self.lock().bool_maj(lit0, lit1, lit2)
+    pub fn bool_maj(&self, lit0: i32, lit1: i32, lit2: i32) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.bool_maj(lit0, lit1, lit2))
+        } else if Self::is_const(lit0) && Self::is_const(lit1) && Self::is_const(lit2) {
+            Ok(Self::bool_lift(
+                (lit0 == Self::TRUE && lit1 == Self::TRUE)
+                    || (lit0 == Self::TRUE && lit2 == Self::TRUE)
+                    || (lit1 == Self::TRUE && lit2 == Self::TRUE),
+            ))
+        } else {
+            Err(PyValueError::new_err("unexpected literal"))
+        }
     }
 
     /// Returns 'lit1' if 'lit0' is true, otherwise 'lit2' is returned.
-    pub fn bool_iff(&self, lit0: i32, lit1: i32, lit2: i32) -> i32 {
-        self.lock().bool_iff(lit0, lit1, lit2)
+    pub fn bool_iff(&self, lit0: i32, lit1: i32, lit2: i32) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.bool_iff(lit0, lit1, lit2))
+        } else if Self::is_const(lit0) && Self::is_const(lit1) && Self::is_const(lit2) {
+            Ok(if lit0 == Self::TRUE { lit1 } else { lit2 })
+        } else {
+            Err(PyValueError::new_err("unexpected literal"))
+        }
     }
 
     /// Computes the conjunction of the elements.
-    pub fn fold_all(&self, lits: Vec<i32>) -> i32 {
-        self.lock().fold_all(lits.into_iter())
+    pub fn fold_all(&self, lits: Vec<i32>) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.fold_all(lits.into_iter()))
+        } else {
+            for lit in lits {
+                if lit == Self::FALSE {
+                    return Ok(Self::FALSE);
+                } else if lit != Self::TRUE {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                }
+            }
+            Ok(Self::TRUE)
+        }
     }
 
     /// Computes the disjunction of the elements.
-    pub fn fold_any(&self, lits: Vec<i32>) -> i32 {
-        self.lock().fold_any(lits.into_iter())
+    pub fn fold_any(&self, lits: Vec<i32>) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.fold_any(lits.into_iter()))
+        } else {
+            for lit in lits {
+                if lit == Self::TRUE {
+                    return Ok(Self::TRUE);
+                } else if lit != Self::FALSE {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                }
+            }
+            Ok(Self::FALSE)
+        }
     }
 
     /// Computes the exactly one predicate over the given elements.
-    pub fn fold_one(&self, lits: Vec<i32>) -> i32 {
-        self.lock().fold_one(lits.into_iter())
+    pub fn fold_one(&self, lits: Vec<i32>) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.fold_one(lits.into_iter()))
+        } else {
+            let mut found = false;
+            for lit in lits {
+                if lit == Self::TRUE {
+                    if found {
+                        return Ok(Self::FALSE);
+                    } else {
+                        found = true;
+                    }
+                } else if lit != Self::FALSE {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                }
+            }
+            Ok(Self::bool_lift(found))
+        }
     }
 
     /// Computes the at most one predicate over the given elements.
-    pub fn fold_amo(&self, lits: Vec<i32>) -> i32 {
-        self.lock().fold_amo(lits.into_iter())
+    pub fn fold_amo(&self, lits: Vec<i32>) -> PyResult<i32> {
+        if let Some(mut s) = self.lock() {
+            Ok(s.fold_amo(lits.into_iter()))
+        } else {
+            let mut found = false;
+            for lit in lits {
+                if lit == Self::TRUE {
+                    if found {
+                        return Ok(Self::FALSE);
+                    } else {
+                        found = true;
+                    }
+                } else if lit != Self::FALSE {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                }
+            }
+            Ok(Self::TRUE)
+        }
     }
 
     /// Returns true if the two sequences are equal. The two sequences
@@ -744,8 +855,17 @@ impl PySolver {
     pub fn comp_eq(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
+        } else if let Some(mut s) = self.lock() {
+            Ok(s.comp_eq(lits0.into_iter(), lits1.into_iter()))
         } else {
-            Ok(self.lock().comp_eq(lits0.into_iter(), lits1.into_iter()))
+            for (&a, &b) in lits0.iter().zip(lits1.iter()) {
+                if !Self::is_const(a) || !Self::is_const(b) {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                } else if a != b {
+                    return Ok(Self::FALSE);
+                }
+            }
+            Ok(Self::TRUE)
         }
     }
 
@@ -754,8 +874,17 @@ impl PySolver {
     pub fn comp_ne(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
+        } else if let Some(mut s) = self.lock() {
+            Ok(s.comp_ne(lits0.into_iter(), lits1.into_iter()))
         } else {
-            Ok(self.lock().comp_ne(lits0.into_iter(), lits1.into_iter()))
+            for (&a, &b) in lits0.iter().zip(lits1.iter()) {
+                if !Self::is_const(a) || !Self::is_const(b) {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                } else if a != b {
+                    return Ok(Self::TRUE);
+                }
+            }
+            Ok(Self::FALSE)
         }
     }
 
@@ -766,8 +895,17 @@ impl PySolver {
     pub fn comp_le(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
+        } else if let Some(mut s) = self.lock() {
+            Ok(s.comp_le(lits0.into_iter(), lits1.into_iter()))
         } else {
-            Ok(self.lock().comp_le(lits0.into_iter(), lits1.into_iter()))
+            for (&a, &b) in lits0.iter().rev().zip(lits1.iter().rev()) {
+                if !Self::is_const(a) || !Self::is_const(b) {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                } else if a != b {
+                    return Ok(b);
+                }
+            }
+            Ok(Self::TRUE)
         }
     }
 
@@ -776,8 +914,17 @@ impl PySolver {
     pub fn comp_lt(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
+        } else if let Some(mut s) = self.lock() {
+            Ok(s.comp_lt(lits0.into_iter(), lits1.into_iter()))
         } else {
-            Ok(self.lock().comp_lt(lits0.into_iter(), lits1.into_iter()))
+            for (&a, &b) in lits0.iter().rev().zip(lits1.iter().rev()) {
+                if !Self::is_const(a) || !Self::is_const(b) {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                } else if a != b {
+                    return Ok(b);
+                }
+            }
+            Ok(Self::FALSE)
         }
     }
 
@@ -788,8 +935,17 @@ impl PySolver {
     pub fn comp_ge(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
+        } else if let Some(mut s) = self.lock() {
+            Ok(s.comp_ge(lits0.into_iter(), lits1.into_iter()))
         } else {
-            Ok(self.lock().comp_ge(lits0.into_iter(), lits1.into_iter()))
+            for (&a, &b) in lits0.iter().rev().zip(lits1.iter().rev()) {
+                if !Self::is_const(a) || !Self::is_const(b) {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                } else if a != b {
+                    return Ok(a);
+                }
+            }
+            Ok(Self::TRUE)
         }
     }
 
@@ -798,8 +954,17 @@ impl PySolver {
     pub fn comp_gt(&self, lits0: Vec<i32>, lits1: Vec<i32>) -> PyResult<i32> {
         if lits0.len() != lits1.len() {
             Err(PyValueError::new_err("length mismatch"))
+        } else if let Some(mut s) = self.lock() {
+            Ok(s.comp_gt(lits0.into_iter(), lits1.into_iter()))
         } else {
-            Ok(self.lock().comp_gt(lits0.into_iter(), lits1.into_iter()))
+            for (&a, &b) in lits0.iter().rev().zip(lits1.iter().rev()) {
+                if !Self::is_const(a) || !Self::is_const(b) {
+                    return Err(PyValueError::new_err("unexpected literal"));
+                } else if a != b {
+                    return Ok(a);
+                }
+            }
+            Ok(Self::FALSE)
         }
     }
 }

@@ -72,27 +72,27 @@ class Boolean(Domain):
     @typechecked
     def bool_or(self, elem0: BitVec, elem1: BitVec) -> BitVec:
         assert len(elem0) == len(elem1) == self.length
-        elem0 | elem1
+        return elem0 | elem1
 
     @typechecked
     def bool_and(self, elem0: BitVec, elem1: BitVec) -> BitVec:
         assert len(elem0) == len(elem1) == self.length
-        elem0 & elem1
+        return elem0 & elem1
 
     @typechecked
     def bool_imp(self, elem0: BitVec, elem1: BitVec) -> BitVec:
         assert len(elem0) == len(elem1) == self.length
-        (~elem0) | elem1
+        return ~elem0 | elem1
 
     @typechecked
     def bool_xor(self, elem0: BitVec, elem1: BitVec) -> BitVec:
         assert len(elem0) == len(elem1) == self.length
-        elem0 ^ elem1
+        return elem0 ^ elem1
 
     @typechecked
     def bool_equ(self, elem0: BitVec, elem1: BitVec) -> BitVec:
         assert len(elem0) == len(elem1) == self.length
-        ~elem0 ^ elem1
+        return ~elem0 ^ elem1
 
 
 BOOLEAN = Boolean()

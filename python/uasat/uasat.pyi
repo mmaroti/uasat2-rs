@@ -43,6 +43,8 @@ class Solver(object):
         * `unsat`: set internal options to target unsatisfiable instances
         """
 
+    CALCULATOR: Solver
+
     @property
     def signature(self) -> str:
         """

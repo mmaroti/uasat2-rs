@@ -26,9 +26,24 @@ def test_signature():
     assert solver.signature == "cadical-1.9.5"
 
 
+def test_join():
+    solver = Solver()
+    assert solver.join(Solver.STATIC) is solver
+    assert Solver.STATIC.join(solver) is solver
+    assert solver.join(solver) is solver
+    assert Solver.STATIC.join(Solver.STATIC) is Solver.STATIC
+
+    other = Solver()
+    try:
+        solver.join(other)
+        assert False
+    except ValueError:
+        pass
+
+
 def test_static():
     solver = Solver()
-    calc = Solver.CALCULATOR
+    calc = Solver.STATIC
 
     for a in [Solver.FALSE, Solver.TRUE]:
         assert solver.bool_not(a) == calc.bool_not(a)

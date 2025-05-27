@@ -43,12 +43,19 @@ class Solver(object):
         * `unsat`: set internal options to target unsatisfiable instances
         """
 
-    CALCULATOR: Solver
-
     @property
     def signature(self) -> str:
         """
         Returns the name and version of the CaDiCaL library.
+        """
+
+    STATIC: Solver
+
+    def join(self, other: Solver) -> Solver:
+        """
+        Returns a pointer to either this or the other solver, whichever is
+        not the static instance. If neither is static and they are different
+        then an error is returned.
         """
 
     def add_variable(self) -> int:

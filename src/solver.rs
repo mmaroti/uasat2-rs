@@ -553,14 +553,27 @@ impl PySolver {
         if let Some(s) = self.lock() {
             s.signature().into()
         } else {
-            "calculator".into()
+            "static".into()
         }
     }
 
     /// A static instance that is not backed by a SAT solver, it simply
     /// calculates the required boolean operation.
     #[classattr]
-    pub const CALCULATOR: PySolver = PySolver(None);
+    pub const STATIC: PySolver = PySolver(None);
+
+    /// Returns a pointer to either this or the other solver, whichever is
+    /// not the static instance. If neither is static and they are different
+    /// then an error is returned.
+    pub fn join(me: &Bound<'_, Self>, other: Py<Self>) -> PyResult<Py<Self>> {
+        if other.get().0.is_none() {
+            Ok(me.clone().unbind())
+        } else if me.get().0.is_none() || me.is(&other) {
+            Ok(other)
+        } else {
+            Err(PyValueError::new_err("not joinable"))
+        }
+    }
 
     /// Adds a new variable to the solver and returns the corresponding
     /// literal as an integer.
@@ -568,7 +581,7 @@ impl PySolver {
         if let Some(mut s) = self.lock() {
             Ok(s.add_variable())
         } else {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+            Err(PyNotImplementedError::new_err("static instance"))
         }
     }
 
@@ -587,45 +600,50 @@ impl PySolver {
     /// non-zero.
     pub fn add_clause(&self, clause: Vec<i32>) -> PyResult<()> {
         if let Some(mut s) = self.lock() {
-            Ok(s.add_clause(clause.into_iter()))
+            s.add_clause(clause.into_iter());
+            Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+            Err(PyNotImplementedError::new_err("static instance"))
         }
     }
 
     /// Adds the unary clause to the solver.
     pub fn add_clause1(&self, lit0: i32) -> PyResult<()> {
         if let Some(mut s) = self.lock() {
-            Ok(s.add_clause1(lit0))
+            s.add_clause1(lit0);
+            Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+            Err(PyNotImplementedError::new_err("static instance"))
         }
     }
 
     /// Adds the binary clause to the solver.
     pub fn add_clause2(&self, lit0: i32, lit1: i32) -> PyResult<()> {
         if let Some(mut s) = self.lock() {
-            Ok(s.add_clause2(lit0, lit1))
+            s.add_clause2(lit0, lit1);
+            Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+            Err(PyNotImplementedError::new_err("static instance"))
         }
     }
 
     /// Adds the ternary clause to the solver.
     pub fn add_clause3(&self, lit0: i32, lit1: i32, lit2: i32) -> PyResult<()> {
         if let Some(mut s) = self.lock() {
-            Ok(s.add_clause3(lit0, lit1, lit2))
+            s.add_clause3(lit0, lit1, lit2);
+            Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+            Err(PyNotImplementedError::new_err("static instance"))
         }
     }
 
     /// Adds the quaternary clause to the solver.
     pub fn add_clause4(&self, lit0: i32, lit1: i32, lit2: i32, lit3: i32) -> PyResult<()> {
         if let Some(mut s) = self.lock() {
-            Ok(s.add_clause4(lit0, lit1, lit2, lit3))
+            s.add_clause4(lit0, lit1, lit2, lit3);
+            Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+            Err(PyNotImplementedError::new_err("static instance"))
         }
     }
 
@@ -647,7 +665,7 @@ impl PySolver {
         if let Some(mut s) = self.lock() {
             Ok(s.solve())
         } else {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+            Err(PyNotImplementedError::new_err("static instance"))
         }
     }
 
@@ -657,7 +675,7 @@ impl PySolver {
         if let Some(mut s) = self.lock() {
             Ok(s.solve_with(assumptions.into_iter()))
         } else {
-            Err(PyNotImplementedError::new_err("calculator instance"))
+            Err(PyNotImplementedError::new_err("static instance"))
         }
     }
 
@@ -756,8 +774,7 @@ impl PySolver {
             Ok(s.bool_maj(lit0, lit1, lit2))
         } else if Self::is_const(lit0) && Self::is_const(lit1) && Self::is_const(lit2) {
             Ok(Self::bool_lift(
-                (lit0 == Self::TRUE && lit1 == Self::TRUE)
-                    || (lit0 == Self::TRUE && lit2 == Self::TRUE)
+                (lit0 == Self::TRUE && (lit1 == Self::TRUE || lit2 == Self::TRUE))
                     || (lit1 == Self::TRUE && lit2 == Self::TRUE),
             ))
         } else {

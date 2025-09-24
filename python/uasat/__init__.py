@@ -24,4 +24,4 @@ from .domain import *
 # if hasattr(uasat, "__all__"):
 #     __all__ = uasat.__all__
 
-__all__ = ["Solver", "BitVec", "Domain", "BOOLEAN"]
+__all__ = ["Solver", "BitVec", "Domain", "Product", "BOOLEAN"]

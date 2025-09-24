@@ -28,10 +28,11 @@ def test_signature():
 
 def test_join():
     solver = Solver()
-    assert solver.join(Solver.STATIC) is solver
-    assert Solver.STATIC.join(solver) is solver
+    assert solver.join(Solver.CALC) is solver
+    assert Solver.CALC.join(solver) is solver
     assert solver.join(solver) is solver
-    assert Solver.STATIC.join(Solver.STATIC) is Solver.STATIC
+    assert Solver.CALC.join(Solver.CALC) is Solver.CALC
+    assert Solver.CALC is Solver.CALC
 
     other = Solver()
     try:
@@ -40,10 +41,13 @@ def test_join():
     except ValueError:
         pass
 
+    calc = BitVec.hihi()
+    assert calc is Solver.CALC
 
-def test_static():
+
+def test_calc():
     solver = Solver()
-    calc = Solver.STATIC
+    calc = Solver.CALC
 
     for a in [Solver.FALSE, Solver.TRUE]:
         assert solver.bool_not(a) == calc.bool_not(a)

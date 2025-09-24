@@ -49,7 +49,7 @@ class Solver(object):
         Returns the name and version of the CaDiCaL library.
         """
 
-    STATIC: Solver
+    CALC: Solver
 
     def join(self, other: Solver) -> Solver:
         """

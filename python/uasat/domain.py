@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import math
 from typeguard import typechecked
 
 from .uasat import Solver, BitVec
@@ -20,15 +21,18 @@ from .uasat import Solver, BitVec
 
 class Domain:
     @typechecked
-    def __init__(self, length: int):
+    def __init__(self, length: int, size: int):
         self.length = length
+        self.size = size
 
     @typechecked
     def contains(self, elem: BitVec) -> BitVec:
+        assert len(elem) == self.length
         raise NotImplementedError()
 
     @typechecked
     def decode(self, elem: BitVec) -> str:
+        assert len(elem) == self.length
         raise NotImplementedError()
 
     @typechecked
@@ -41,18 +45,64 @@ class Domain:
         return BitVec[self, elem0.solver, lits]
 
 
-class Boolean(Domain):
-    def __init__(self):
-        super().__init__(1)
+class Product(Domain):
+    @typechecked
+    def __init__(self, *domains: Domain):
+        length = sum(domain.length for domain in domains)
+        size = math.prod(domain.size for domain in domains)
+        super().__init__(length, size)
+        self.domains = domains
 
     @typechecked
     def contains(self, elem: BitVec) -> BitVec:
-        return BitVec(elem.solver, Solver.TRUE)
+        assert len(elem) == self.length
+        start = 0
+        result = BOOLEAN.TRUE
+        for domain in self.domains:
+            length = domain.length
+            part = [elem[i] for i in range(start, start + length)]
+            part = BitVec(elem.solver, part)
+            print(part.solver, result.solver)
+            result = BOOLEAN.bool_and(result, domain.contains(part))
+            start += length
+        return result
 
     @typechecked
     def decode(self, elem: BitVec) -> str:
         assert len(elem) == self.length
-        lit = elem.lits[0]
+        start = 0
+        result = "["
+        first = True
+        for domain in self.domains:
+            length = domain.length
+            part = [elem[i] for i in range(start, start + length)]
+            part = BitVec(elem.solver, part)
+            if first:
+                first = False
+            else:
+                result += ","
+            result += domain.decode(part)
+            start += length
+        result += "]"
+        return result
+
+
+class Boolean(Domain):
+    def __init__(self):
+        super().__init__(1, 2)
+
+    TRUE = BitVec(Solver.CALC, [Solver.TRUE])
+    FALSE = BitVec(Solver.CALC, [Solver.FALSE])
+
+    @typechecked
+    def contains(self, elem: BitVec) -> BitVec:
+        assert len(elem) == self.length
+        return Boolean.TRUE
+
+    @typechecked
+    def decode(self, elem: BitVec) -> str:
+        assert len(elem) == self.length
+        lit = elem[0]
         if lit == Solver.TRUE:
             return "1"
         elif lit == Solver.FALSE:
@@ -101,8 +151,7 @@ BOOLEAN = Boolean()
 class SmallSet(Domain):
     @typechecked
     def __init__(self, size: int):
-        super().__init__(size)
-        self.size = size
+        super().__init__(size, size)
 
     @typechecked
     def contains(self, elem: BitVec) -> BitVec:

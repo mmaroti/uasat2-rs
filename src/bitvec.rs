@@ -56,6 +56,11 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
+    #[staticmethod]
+    pub fn hihi(py: Python<'_>) -> PyResult<Py<PySolver>> {
+        PySolver::get_calc(py)
+    }
+
     /// Returns the associated solver for this bit vector. If the solver is
     /// `None``, then all literals are `TRUE`` or `FALSE``. Otherwise, the
     /// elements are literals of the solver and their value is not yet known.

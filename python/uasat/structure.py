@@ -26,7 +26,7 @@ class Universe:
 class Relation:
     def __init__(self, universe: Universe, arity: int,
                  literals: Optional[List[int]] = None,
-                 solver: Solver = Solver.STATIC):
+                 solver: Solver = Solver.CALC):
         assert arity >= 0
 
         length = 1

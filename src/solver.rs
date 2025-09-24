@@ -523,6 +523,10 @@ impl PySolver {
     pub fn lock(&self) -> Option<MutexGuard<'_, Solver>> {
         self.0.as_ref().map(|a| a.lock().unwrap())
     }
+
+    pub fn get_calc(py: Python<'_>) -> PyResult<Py<PySolver>> {
+        return py.get_type::<PySolver>().getattr("CALC")?.extract();
+    }
 }
 
 #[allow(clippy::new_without_default)]
@@ -553,17 +557,19 @@ impl PySolver {
         if let Some(s) = self.lock() {
             s.signature().into()
         } else {
-            "static".into()
+            "calculator".into()
         }
     }
 
-    /// A static instance that is not backed by a SAT solver, it simply
-    /// calculates the required boolean operation.
+    pub fn __bool__(&self) -> bool {
+        self.0.is_some()
+    }
+
     #[classattr]
-    pub const STATIC: PySolver = PySolver(None);
+    pub const CALC: PySolver = PySolver(None);
 
     /// Returns a pointer to either this or the other solver, whichever is
-    /// not the static instance. If neither is static and they are different
+    /// not the calculator instance. If neither is static and they are different
     /// then an error is returned.
     pub fn join(me: &Bound<'_, Self>, other: Py<Self>) -> PyResult<Py<Self>> {
         if other.get().0.is_none() {
@@ -581,7 +587,7 @@ impl PySolver {
         if let Some(mut s) = self.lock() {
             Ok(s.add_variable())
         } else {
-            Err(PyNotImplementedError::new_err("static instance"))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
@@ -603,7 +609,7 @@ impl PySolver {
             s.add_clause(clause.into_iter());
             Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("static instance"))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
@@ -613,7 +619,7 @@ impl PySolver {
             s.add_clause1(lit0);
             Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("static instance"))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
@@ -623,7 +629,7 @@ impl PySolver {
             s.add_clause2(lit0, lit1);
             Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("static instance"))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
@@ -633,7 +639,7 @@ impl PySolver {
             s.add_clause3(lit0, lit1, lit2);
             Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("static instance"))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
@@ -643,7 +649,7 @@ impl PySolver {
             s.add_clause4(lit0, lit1, lit2, lit3);
             Ok(())
         } else {
-            Err(PyNotImplementedError::new_err("static instance"))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
@@ -665,7 +671,7 @@ impl PySolver {
         if let Some(mut s) = self.lock() {
             Ok(s.solve())
         } else {
-            Err(PyNotImplementedError::new_err("static instance"))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 
@@ -675,7 +681,7 @@ impl PySolver {
         if let Some(mut s) = self.lock() {
             Ok(s.solve_with(assumptions.into_iter()))
         } else {
-            Err(PyNotImplementedError::new_err("static instance"))
+            Err(PyNotImplementedError::new_err("calculator instance"))
         }
     }
 

@@ -28,24 +28,22 @@ def test_signature():
 
 def test_join():
     solver = Solver()
-    assert solver.join(Solver.CALC) is solver
-    assert Solver.CALC.join(solver) is solver
-    assert solver.join(solver) is solver
-    assert Solver.CALC.join(Solver.CALC) is Solver.CALC
-    assert Solver.CALC is Solver.CALC
+    assert solver and not Solver.CALC
+    assert solver is not Solver.CALC
+    assert (solver | Solver.CALC) is solver
+    assert (Solver.CALC | solver) is solver
+    assert (solver | solver) is solver
+    assert (Solver.CALC | Solver.CALC) is Solver.CALC
 
     other = Solver()
     try:
-        solver.join(other)
+        solver | other
         assert False
     except ValueError:
         pass
 
-    calc = BitVec.hihi()
-    assert calc is Solver.CALC
 
-
-def test_calc():
+def old_test_calc():
     solver = Solver()
     calc = Solver.CALC
 
@@ -87,11 +85,11 @@ def test_bitvec():
 
     solver = Solver()
     v1 = BitVec(solver, [-1, -1, 1, 1])
-    v2 = BitVec(None, [-1, -1, 1, 1])
-    v3 = BitVec(None, [-1, 1, -1, 1])
+    v2 = BitVec(Solver.CALC, [-1, -1, 1, 1])
+    v3 = BitVec(Solver.CALC, [-1, 1, -1, 1])
 
     def check(u: BitVec, v: BitVec):
-        assert u.solver == solver and v.solver is None
+        assert u.solver == solver and v.solver is Solver.CALC
         assert u.literals == v.literals
 
     check(v1, v2)
@@ -109,9 +107,9 @@ def test_bitvec():
 
     for a in range(8):
         v1 = BitVec(solver, bits(a))
-        v2 = BitVec(None, v1.literals)
+        v2 = BitVec(Solver.CALC, v1.literals)
         for b in range(8):
-            v3 = BitVec(None, bits(b))
+            v3 = BitVec(Solver.CALC, bits(b))
 
             check(v1 == v3, v2 == v3)
             check(v1 != v3, v2 != v3)

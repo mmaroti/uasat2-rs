@@ -18,7 +18,7 @@
 use pyo3::exceptions::{PyIndexError, PyValueError};
 use pyo3::prelude::*;
 
-use super::PySolver;
+use super::old_solver::PySolver;
 use std::fmt::Write;
 
 #[pyclass(frozen, sequence, name = "BitVec")]
@@ -32,7 +32,7 @@ impl PyBitVec {
     /// Creates a new bit vector with the associated solver and literals.
     #[new]
     pub fn new(solver: Py<PySolver>, literals: Vec<i32>) -> PyResult<PyBitVec> {
-        if !solver.get().__bool__() {
+        if solver.get().is_calc() {
             for &a in literals.iter() {
                 if a != PySolver::TRUE && a != PySolver::FALSE {
                     return Err(PyValueError::new_err("invalid literal"));
@@ -95,7 +95,7 @@ impl PyBitVec {
     }
 
     pub fn __and__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
-        let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
+        let solver = PySolver::join2(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
         }
@@ -110,7 +110,7 @@ impl PyBitVec {
     }
 
     pub fn __or__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
-        let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
+        let solver = PySolver::join2(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
         }
@@ -125,7 +125,7 @@ impl PyBitVec {
     }
 
     pub fn __xor__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
-        let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
+        let solver = PySolver::join2(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
         }
@@ -140,18 +140,17 @@ impl PyBitVec {
     }
 
     pub fn __eq__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
-        let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
+        let solver = PySolver::join2(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
         }
 
-        let mut res = PySolver::TRUE;
-        for (&a, &b) in me.get().literals.iter().zip(other.literals.iter()) {
-            let c = solver.get().bool_equ(a, b)?;
-            res = solver.get().bool_and(res, c)?;
-        }
+        let lit = solver.get().comp_eq(
+            me.get().literals.iter().copied().collect(),
+            other.literals.iter().copied().collect(),
+        )?;
 
-        let literals = vec![res].into_boxed_slice();
+        let literals = vec![lit].into_boxed_slice();
         Ok(PyBitVec { solver, literals })
     }
 
@@ -163,18 +162,17 @@ impl PyBitVec {
     }
 
     pub fn __le__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
-        let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
+        let solver = PySolver::join2(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
         }
 
-        let mut res = PySolver::TRUE;
-        for (&a, &b) in me.get().literals.iter().zip(other.literals.iter()) {
-            let c = solver.get().bool_xor(a, b)?;
-            res = solver.get().bool_iff(c, b, res)?;
-        }
+        let lit = solver.get().comp_le(
+            me.get().literals.iter().copied().collect(),
+            other.literals.iter().copied().collect(),
+        )?;
 
-        let literals = vec![res].into_boxed_slice();
+        let literals = vec![lit].into_boxed_slice();
         Ok(PyBitVec { solver, literals })
     }
 
@@ -186,18 +184,17 @@ impl PyBitVec {
     }
 
     pub fn __ge__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
-        let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
+        let solver = PySolver::join2(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
         }
 
-        let mut res = PySolver::TRUE;
-        for (&a, &b) in me.get().literals.iter().zip(other.literals.iter()) {
-            let c = solver.get().bool_xor(a, b)?;
-            res = solver.get().bool_iff(c, a, res)?;
-        }
+        let lit = solver.get().comp_ge(
+            me.get().literals.iter().copied().collect(),
+            other.literals.iter().copied().collect(),
+        )?;
 
-        let literals = vec![res].into_boxed_slice();
+        let literals = vec![lit].into_boxed_slice();
         Ok(PyBitVec { solver, literals })
     }
 

@@ -51,11 +51,17 @@ class Solver(object):
 
     CALC: Solver
 
-    def join(self, other: Solver) -> Solver:
+    def __bool__(self) -> bool:
+        """
+        Retruns TRUE if this is a real solver instance, and FALSE
+        if this is just the calculator instance.
+        """
+
+    def __or__(self, other: Solver) -> Solver:
         """
         Returns a pointer to either this or the other solver, whichever is
-        not the static instance. If neither is static and they are different
-        then an error is returned.
+        not the static calculator instance. If neither is and they are
+        different then an error is returned.
         """
 
     def add_variable(self) -> int:
@@ -241,8 +247,14 @@ class BitVec(object):
     known.
     """
 
+    def __init__(self, solver: Solver, literals: List[int]):
+        """
+        Constructs a new bit vector instance. If the solver is the calculator,
+        then all literals must be either TRUE or FALSE.
+        """
+
     @property
-    def solver(self) -> Optional[Solver]:
+    def solver(self) -> Solver:
         """
         Returns the solver whose literals this vector contains. If the solver
         is None, then all literals are either TRUE or FALSE.

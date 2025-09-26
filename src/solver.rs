@@ -259,7 +259,7 @@ impl PySolver {
     #[inline]
     pub fn bool_and(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
         self.bool_or(Self::bool_not(lit0), Self::bool_not(lit1))
-            .map(|lit2| Self::bool_not(lit2))
+            .map(Self::bool_not)
     }
 
     /// Returns the logical implication of a pair of elements.
@@ -367,6 +367,147 @@ impl PySolver {
         } else {
             Err(PyValueError::new_err("calculator instance"))
         }
+    }
+
+    /// Computes the conjunction of the elements.
+    pub fn fold_all(&self, lits: Bound<'_, PyAny>) -> PyResult<i32> {
+        let mut res = Self::TRUE;
+        for lit in lits.try_iter()? {
+            let lit = lit?.extract::<i32>()?;
+            res = self.bool_and(res, lit)?;
+            if res == Self::FALSE {
+                return Ok(Self::FALSE);
+            }
+        }
+        Ok(res)
+    }
+
+    /// Computes the disjunction of the elements.
+    pub fn fold_any(&self, lits: Bound<'_, PyAny>) -> PyResult<i32> {
+        let mut res = Self::FALSE;
+        for lit in lits.try_iter()? {
+            let lit = lit?.extract::<i32>()?;
+            res = self.bool_or(res, lit)?;
+            if res == Self::TRUE {
+                return Ok(Self::TRUE);
+            }
+        }
+        Ok(res)
+    }
+
+    /// Computes the exactly one predicate over the given elements.
+    pub fn fold_one(&self, lits: Bound<'_, PyAny>) -> PyResult<i32> {
+        let mut min1 = Self::FALSE;
+        let mut min2 = Self::FALSE;
+        for lit in lits.try_iter()? {
+            let lit = lit?.extract::<i32>()?;
+            let tmp = self.bool_and(min1, lit)?;
+            min2 = self.bool_or(min2, tmp)?;
+            min1 = self.bool_or(min1, lit)?;
+            if min2 == Self::TRUE {
+                return Ok(Self::FALSE);
+            }
+        }
+        self.bool_and(min1, Self::bool_not(min2))
+    }
+
+    /// Computes the at most one predicate over the given elements.
+    pub fn fold_amo(&self, lits: Bound<'_, PyAny>) -> PyResult<i32> {
+        let mut min1 = Self::FALSE;
+        let mut min2 = Self::FALSE;
+        for lit in lits.try_iter()? {
+            let lit = lit?.extract::<i32>()?;
+            let tmp = self.bool_and(min1, lit)?;
+            min2 = self.bool_or(min2, tmp)?;
+            min1 = self.bool_or(min1, lit)?;
+            if min2 == Self::TRUE {
+                return Ok(Self::FALSE);
+            }
+        }
+        Ok(Self::bool_not(min2))
+    }
+
+    /// Returns true if the two sequences are equal. The two sequences
+    /// must have the same length.
+    pub fn comp_eq(&self, lits0: Bound<'_, PyAny>, lits1: Bound<'_, PyAny>) -> PyResult<i32> {
+        let mut res = Self::TRUE;
+
+        let mut lits0 = lits0.try_iter()?;
+        let mut lits1 = lits1.try_iter()?;
+        loop {
+            let a = lits0.next();
+            let b = lits1.next();
+
+            if a.is_none() && b.is_none() {
+                return Ok(res);
+            } else if a.is_none() || b.is_none() {
+                return Err(PyValueError::new_err("length mismatch"));
+            }
+
+            let a = a.unwrap()?.extract::<i32>()?;
+            let b = b.unwrap()?.extract::<i32>()?;
+
+            let c = self.bool_equ(a, b)?;
+            res = self.bool_and(res, c)?;
+
+            if res == Self::FALSE {
+                return Ok(Self::FALSE);
+            }
+        }
+    }
+
+    /// Returns true if the two sequences are not equal. The two sequences
+    /// must have the same length.
+    pub fn comp_ne(&self, lits0: Bound<'_, PyAny>, lits1: Bound<'_, PyAny>) -> PyResult<i32> {
+        self.comp_eq(lits0, lits1).map(Self::bool_not)
+    }
+
+    /// Returns true if the first sequence is smaller than or equal to the
+    /// second one as a binary number when the least significant digit is
+    /// the first one. So [TRUE, FALSE] = 1 is smaller than [FALSE, TRUE] = 2.
+    /// The two sequences must have the same length.
+    pub fn comp_le(&self, lits0: Bound<'_, PyAny>, lits1: Bound<'_, PyAny>) -> PyResult<i32> {
+        let mut res = Self::TRUE;
+
+        let mut lits0 = lits0.try_iter()?;
+        let mut lits1 = lits1.try_iter()?;
+        loop {
+            let a = lits0.next();
+            let b = lits1.next();
+
+            if a.is_none() && b.is_none() {
+                return Ok(res);
+            } else if a.is_none() || b.is_none() {
+                return Err(PyValueError::new_err("length mismatch"));
+            }
+
+            let a = a.unwrap()?.extract::<i32>()?;
+            let b = b.unwrap()?.extract::<i32>()?;
+
+            let c = self.bool_xor(a, b)?;
+            res = self.bool_iff(c, b, res)?;
+        }
+    }
+
+    /// Returns true if the first sequence is smaller than the second one
+    /// as a binary number hen the least significant digit is the first one.
+    /// The two sequences must have the same length.
+    pub fn comp_lt(&self, lits0: Bound<'_, PyAny>, lits1: Bound<'_, PyAny>) -> PyResult<i32> {
+        self.comp_le(lits1, lits0).map(Self::bool_not)
+    }
+
+    /// Returns true if the first sequence is greater than or equal to the
+    /// second one as a binary number when the least significant digit is
+    /// the first one. The two sequences must have the same length.
+    pub fn comp_ge(&self, lits0: Bound<'_, PyAny>, lits1: Bound<'_, PyAny>) -> PyResult<i32> {
+        self.comp_le(lits1, lits0)
+    }
+
+    /// Returns true if the first sequence is greater than the second one
+    /// as a binary number hen the least significant digit is the first one.
+    /// The two sequences must have the same length.
+    pub fn comp_gt(&self, lits0: Bound<'_, PyAny>, lits1: Bound<'_, PyAny>) -> PyResult<i32> {
+        self.comp_le(lits0, lits1).map(Self::bool_not)
     }
 }
 

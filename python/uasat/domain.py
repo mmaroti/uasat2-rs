@@ -15,6 +15,7 @@
 
 import math
 from typeguard import typechecked
+from typing import List
 
 from .uasat import Solver, BitVec
 
@@ -54,35 +55,70 @@ class Product(Domain):
         self.domains = domains
 
     @typechecked
-    def contains(self, elem: BitVec) -> BitVec:
+    def parts(self, elem: BitVec) -> List[BitVec]:
         assert len(elem) == self.length
+        result = []
         start = 0
-        result = BOOLEAN.TRUE
         for domain in self.domains:
-            length = domain.length
-            part = [elem[i] for i in range(start, start + length)]
-            part = BitVec(elem.solver, part)
-            print(part.solver, result.solver)
-            result = BOOLEAN.bool_and(result, domain.contains(part))
-            start += length
+            result.append(elem.slice(start, domain.length))
+            start += domain.length
+        return result
+
+    @typechecked
+    def contains(self, elem: BitVec) -> BitVec:
+        result = BOOLEAN.TRUE
+        for dom, part in zip(self.domains, self.parts(elem)):
+            result = BOOLEAN.bool_and(result, dom.contains(part))
         return result
 
     @typechecked
     def decode(self, elem: BitVec) -> str:
-        assert len(elem) == self.length
-        start = 0
         result = "["
         first = True
-        for domain in self.domains:
-            length = domain.length
-            part = [elem[i] for i in range(start, start + length)]
-            part = BitVec(elem.solver, part)
+        for dom, part in zip(self.domains, self.parts(elem)):
             if first:
                 first = False
             else:
                 result += ","
-            result += domain.decode(part)
-            start += length
+            result += dom.decode(part)
+        result += "]"
+        return result
+
+
+class Power(Domain):
+    @typechecked
+    def __init__(self, codomain: Domain, domain: Domain):
+        length = codomain.length * domain.size
+        size = codomain.size ** domain.size
+        super().__init__(length, size)
+        self.codomain = codomain
+        self.domain = domain
+
+    @typechecked
+    def parts(self, elem: BitVec) -> List[BitVec]:
+        assert len(elem) == self.length
+        result = []
+        for start in range(0, self.length, self.codomain.length):
+            result.append(elem.slice(start, self.codomain.length))
+        return result
+
+    @typechecked
+    def contains(self, elem: BitVec) -> BitVec:
+        result = BOOLEAN.TRUE
+        for part in self.parts(elem):
+            result = BOOLEAN.bool_and(result, self.codomain.contains(part))
+        return result
+
+    @typechecked
+    def decode(self, elem: BitVec) -> str:
+        result = "["
+        first = True
+        for part in self.parts(elem):
+            if first:
+                first = False
+            else:
+                result += ","
+            result += self.codomain.decode(part)
         result += "]"
         return result
 
@@ -111,8 +147,8 @@ class Boolean(Domain):
             raise ValueError("invalid elem")
 
     @typechecked
-    def bool_lift(self, solver: Solver, value: bool) -> BitVec:
-        return BitVec(solver, [Solver.bool_lift(value)])
+    def bool_lift(self, value: bool) -> BitVec:
+        return Boolean.TRUE if value else Boolean.FALSE
 
     @typechecked
     def bool_not(self, elem: BitVec) -> BitVec:
@@ -164,11 +200,11 @@ class SmallSet(Domain):
         assert len(elem) == self.length
         val = None
         for i in range(self.size):
-            if elem.lits[i] == Solver.TRUE:
+            if elem.literals[i] == Solver.TRUE:
                 assert val is None
                 val = i
             else:
-                assert elem.lits[i] == Solver.FALSE
+                assert elem.literals[i] == Solver.FALSE
         if val is None:
             raise ValueError("invalid elem")
         return str(val)

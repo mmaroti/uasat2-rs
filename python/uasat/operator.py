@@ -13,23 +13,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Test module docstring.
-"""
+from typeguard import typechecked
+from typing import List
 
-from .uasat import *
-from .domain import *
+from .domain import Domain
 
-# __doc__ = uasat.__doc__
-# if hasattr(uasat, "__all__"):
-#     __all__ = uasat.__all__
 
-__all__ = [
-    "Solver",
-    "BitVec",
-    "Domain",
-    "Product",
-    "Power",
-    "SmallSet",
-    "BOOLEAN",
-]
+class Operator:
+    @typechecked
+    def __init__(self, domains: List[Domain], codomain: Domain):
+        self.domains = domains
+        self.codomain = codomain
+
+    @property
+    @typechecked
+    def arity(self) -> int:
+        return len(self.domains)
+
+    @typechecked
+    def __call__(self, *args: Domain):
+        assert len(args) == self.arity
+        for domain, arg in zip(self.domains, args):
+            assert domain.length == len(arg)
+        raise NotImplementedError()

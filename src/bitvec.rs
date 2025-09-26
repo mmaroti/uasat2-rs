@@ -31,7 +31,7 @@ pub struct PyBitVec {
 impl PyBitVec {
     /// Creates a new bit vector with the associated solver and literals.
     #[new]
-    pub fn new(solver: Py<PySolver>, literals: Vec<i32>) -> PyResult<PyBitVec> {
+    pub fn new(solver: Py<PySolver>, literals: Vec<i32>) -> PyResult<Self> {
         if !solver.get().__bool__() {
             for &a in literals.iter() {
                 if a != PySolver::TRUE && a != PySolver::FALSE {
@@ -83,7 +83,19 @@ impl PyBitVec {
         }
     }
 
-    pub fn __invert__(me: &Bound<'_, Self>) -> PyBitVec {
+    pub fn slice(me: &Bound<'_, Self>, start: usize, length: usize) -> PyResult<Self> {
+        let literals = &me.get().literals;
+        if start + length > literals.len() {
+            Err(PyIndexError::new_err("invalid slice indices"))
+        } else {
+            let solver = me.get().solver.clone_ref(me.py());
+            let literals: Vec<i32> = literals[start..(start + length)].into();
+            let literals = literals.into_boxed_slice();
+            Ok(PyBitVec { solver, literals })
+        }
+    }
+
+    pub fn __invert__(me: &Bound<'_, Self>) -> Self {
         let solver = me.get().solver.clone_ref(me.py());
         let literals = me
             .get()
@@ -94,7 +106,7 @@ impl PyBitVec {
         PyBitVec { solver, literals }
     }
 
-    pub fn __and__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+    pub fn __and__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
@@ -109,7 +121,7 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __or__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+    pub fn __or__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
@@ -124,7 +136,7 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __xor__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+    pub fn __xor__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
@@ -139,7 +151,7 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __eq__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+    pub fn __eq__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
@@ -155,14 +167,14 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __ne__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+    pub fn __ne__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let mut res = Self::__eq__(me, other)?;
         let lit = PySolver::bool_not(res.literals[0]);
         res.literals = vec![lit].into_boxed_slice();
         Ok(res)
     }
 
-    pub fn __le__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+    pub fn __le__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
@@ -178,14 +190,14 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __gt__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+    pub fn __gt__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let mut res = Self::__le__(me, other)?;
         let lit = PySolver::bool_not(res.literals[0]);
         res.literals = vec![lit].into_boxed_slice();
         Ok(res)
     }
 
-    pub fn __ge__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+    pub fn __ge__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
@@ -201,7 +213,7 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __lt__(me: &Bound<'_, Self>, other: &PyBitVec) -> PyResult<PyBitVec> {
+    pub fn __lt__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let mut res = Self::__ge__(me, other)?;
         let lit = PySolver::bool_not(res.literals[0]);
         res.literals = vec![lit].into_boxed_slice();

@@ -21,9 +21,6 @@ pub use solver::*;
 mod bitvec;
 pub use bitvec::*;
 
-mod old_bitvec;
-mod old_solver;
-
 use pyo3::prelude::*;
 
 /// The uasat module implemented in Rust.

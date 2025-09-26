@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import List, Iterable, Optional
 
 
 class Solver(object):
@@ -181,37 +181,37 @@ class Solver(object):
         Returns 'lit1' if 'lit0' is true, otherwise 'lit2' is returned.
         """
 
-    def fold_all(self, lits: List[int]) -> int:
+    def fold_all(self, lits: Iterable[int]) -> int:
         """
         Computes the conjunction of the elements.
         """
 
-    def fold_any(self, lits: List[int]) -> int:
+    def fold_any(self, lits: Iterable[int]) -> int:
         """
         Computes the disjunction of the elements.
         """
 
-    def fold_one(self, lits: List[int]) -> int:
+    def fold_one(self, lits: Iterable[int]) -> int:
         """
         Computes the exactly one predicate over the given elements.
         """
 
-    def fold_amo(self, lits: List[int]) -> int:
+    def fold_amo(self, lits: Iterable[int]) -> int:
         """
         Computes the at most one predicate over the given elements.
         """
 
-    def comp_eq(self, lits0: List[int], lits1: List[int]) -> int:
+    def comp_eq(self, lits0: Iterable[int], lits1: Iterable[int]) -> int:
         """
         Returns true if the two sequences are equal.
         """
 
-    def comp_ne(self, lits0: List[int], lits1: List[int]) -> int:
+    def comp_ne(self, lits0: Iterable[int], lits1: Iterable[int]) -> int:
         """
         Returns true if the two sequences are not equal.
         """
 
-    def comp_le(self, lits0: List[int], lits1: List[int]) -> int:
+    def comp_le(self, lits0: Iterable[int], lits1: Iterable[int]) -> int:
         """
         Returns true if the first sequence is smaller than or equal to the
         second one as a binary number when the least significant digit is
@@ -219,23 +219,24 @@ class Solver(object):
         The two sequences must have the same length.
         """
 
-    def comp_lt(self, lits0: List[int], lits1: List[int]) -> int:
+    def comp_lt(self, lits0: Iterable[int], lits1: Iterable[int]) -> int:
         """
-        Returns true if the first sequence is smaller than the second one.
+        Returns true if the first sequence is smaller than the second one
+        as a binary number hen the least significant digit is the first one.
         The two sequences must have the same length.
         """
 
-    def comp_ge(self, lits0: List[int], lits1: List[int]) -> int:
+    def comp_ge(self, lits0: Iterable[int], lits1: Iterable[int]) -> int:
         """
         Returns true if the first sequence is greater than or equal to the
-        second one as a binary number when the least significant digit is the
-        first one. So [TRUE, FALSE] = 1 is not greater than [FALSE, TRUE] = 2.
-        The two sequences must have the same length.
+        second one as a binary number when the least significant digit is
+        the first one. The two sequences must have the same length.
         """
 
-    def comp_gt(self, lits0: List[int], lits1: List[int]) -> int:
+    def comp_gt(self, lits0: Iterable[int], lits1: Iterable[int]) -> int:
         """
-        Returns true if the first sequence is greater than the second one.
+        Returns true if the first sequence is greater than the second one
+        as a binary number hen the least significant digit is the first one.
         The two sequences must have the same length.
         """
 
@@ -276,6 +277,11 @@ class BitVec(object):
     def __getitem__(self, index: int) -> int:
         """
         Returns the given literal in this vector.
+        """
+
+    def slice(self, start: int, length: int) -> BitVec:
+        """
+        Returns a subslice of this vector.
         """
 
     def __invert__(self) -> 'BitVec':

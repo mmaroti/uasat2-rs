@@ -17,9 +17,8 @@ from uasat import *
 
 
 def test_bool():
-    solver = Solver()
-    elem0 = BOOLEAN.bool_lift(solver, True)
-    elem1 = BOOLEAN.bool_lift(solver, False)
+    elem0 = BOOLEAN.bool_lift(True)
+    elem1 = BOOLEAN.bool_lift(False)
     elem2 = BOOLEAN.bool_or(elem0, elem1)
     # elem3 = BOOLEAN.comp_eq(elem2, elem1)
     print(BOOLEAN.decode(elem2))
@@ -30,6 +29,22 @@ def test_product():
     domain = Product(BOOLEAN, BOOLEAN, BOOLEAN)
     elem1 = BitVec(solver, [Solver.TRUE, Solver.FALSE, Solver.TRUE])
     print(domain.decode(elem1))
-    # elem2 = domain.contains(elem1)
-    # print(BOOLEAN.decode(elem2))
+    elem2 = domain.contains(elem1)
+    print(BOOLEAN.decode(elem2))
 
+
+def test_power():
+    solver = Solver()
+    domain = Power(SmallSet(3), SmallSet(3))
+    elem1 = BitVec(solver, [
+        Solver.TRUE, Solver.FALSE, Solver.FALSE,
+        Solver.FALSE, Solver.TRUE, Solver.FALSE,
+        Solver.FALSE, Solver.FALSE, Solver.TRUE,
+    ])
+    print(domain.decode(elem1))
+    elem2 = domain.contains(elem1)
+    print(BOOLEAN.decode(elem2))
+
+
+if __name__ == '__main__':
+    test_power()

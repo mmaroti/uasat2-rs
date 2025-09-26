@@ -208,3 +208,22 @@ class SmallSet(Domain):
         if val is None:
             raise ValueError("invalid elem")
         return str(val)
+
+
+class Operator:
+    @typechecked
+    def __init__(self, domains: List[Domain], codomain: Domain):
+        self.domains = domains
+        self.codomain = codomain
+
+    @property
+    @typechecked
+    def arity(self) -> int:
+        return len(self.domains)
+
+    @typechecked
+    def __call__(self, *args: Domain):
+        assert len(args) == self.arity
+        for domain, arg in zip(self.domains, args):
+            assert domain.length == len(arg)
+        raise NotImplementedError()

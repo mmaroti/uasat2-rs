@@ -44,6 +44,19 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
+    /// Constructs a new bit vector of length length filled with fresh
+    /// new literals from the solver.
+    #[staticmethod]
+    pub fn new_variable(solver: Py<PySolver>, count: u32) -> PyResult<Self> {
+        if solver.get().__bool__() {
+            let var = solver.get().add_variable(count);
+            let literals = (var..(var + count as i32)).collect();
+            Ok(PyBitVec { solver, literals })
+        } else {
+            Err(PyValueError::new_err("calculator instance"))
+        }
+    }
+
     /// Returns the associated solver for this bit vector. If the solver is
     /// `None``, then all literals are `TRUE`` or `FALSE``. Otherwise, the
     /// elements are literals of the solver and their value is not yet known.
@@ -83,13 +96,33 @@ impl PyBitVec {
         }
     }
 
+    /// Returns a subslice of this vector.
     pub fn slice(me: &Bound<'_, Self>, start: usize, length: usize) -> PyResult<Self> {
         let literals = &me.get().literals;
-        if start + length > literals.len() {
-            Err(PyIndexError::new_err("invalid slice indices"))
-        } else {
+        if start + length <= literals.len() {
             let solver = me.get().solver.clone_ref(me.py());
             let literals: Vec<i32> = literals[start..(start + length)].into();
+            let literals = literals.into_boxed_slice();
+            Ok(PyBitVec { solver, literals })
+        } else {
+            Err(PyIndexError::new_err("invalid slice indices"))
+        }
+    }
+
+    /// When this bit vector is backed by a solver and there exists a solution,
+    /// then this method returns the value of these literals in the solution.
+    pub fn get_value(me: &Bound<'_, Self>) -> PyResult<Self> {
+        if !me.get().solver.get().__bool__() {
+            Err(PyValueError::new_err("calculator instance"))
+        } else if me.get().solver.get().status() != Some(true) {
+            Err(PyValueError::new_err("instance not solved"))
+        } else {
+            let mut literals = Vec::with_capacity(me.get().literals.len());
+            for lit in me.get().literals.iter() {
+                let val = me.get().solver.get().get_value(*lit) == Some(true);
+                literals.push(PySolver::bool_lift(val));
+            }
+            let solver = me.py().get_type::<PySolver>().getattr("CALC")?.extract()?;
             let literals = literals.into_boxed_slice();
             Ok(PyBitVec { solver, literals })
         }
@@ -218,5 +251,65 @@ impl PyBitVec {
         let lit = PySolver::bool_not(res.literals[0]);
         res.literals = vec![lit].into_boxed_slice();
         Ok(res)
+    }
+
+    pub fn fold_all(me: &Bound<'_, Self>) -> PyResult<Self> {
+        let solver = me.get().solver.clone_ref(me.py());
+        let mut res = PySolver::TRUE;
+        for lit in me.get().literals.iter() {
+            res = solver.get().bool_and(res, *lit)?;
+            if res == PySolver::FALSE {
+                break;
+            }
+        }
+        let literals = vec![res].into_boxed_slice();
+        Ok(PyBitVec { solver, literals })
+    }
+
+    pub fn fold_any(me: &Bound<'_, Self>) -> PyResult<Self> {
+        let solver = me.get().solver.clone_ref(me.py());
+        let mut res = PySolver::FALSE;
+        for lit in me.get().literals.iter() {
+            res = solver.get().bool_or(res, *lit)?;
+            if res == PySolver::TRUE {
+                break;
+            }
+        }
+        let literals = vec![res].into_boxed_slice();
+        Ok(PyBitVec { solver, literals })
+    }
+
+    pub fn fold_one(me: &Bound<'_, Self>) -> PyResult<Self> {
+        let solver = me.get().solver.clone_ref(me.py());
+        let mut min1 = PySolver::FALSE;
+        let mut min2 = PySolver::FALSE;
+        for lit in me.get().literals.iter() {
+            let tmp = solver.get().bool_and(min1, *lit)?;
+            min2 = solver.get().bool_or(min2, tmp)?;
+            min1 = solver.get().bool_or(min1, *lit)?;
+            if min2 == PySolver::TRUE {
+                break;
+            }
+        }
+        let res = solver.get().bool_and(min1, PySolver::bool_not(min2))?;
+        let literals = vec![res].into_boxed_slice();
+        Ok(PyBitVec { solver, literals })
+    }
+
+    pub fn fold_amo(me: &Bound<'_, Self>) -> PyResult<Self> {
+        let solver = me.get().solver.clone_ref(me.py());
+        let mut min1 = PySolver::FALSE;
+        let mut min2 = PySolver::FALSE;
+        for lit in me.get().literals.iter() {
+            let tmp = solver.get().bool_and(min1, *lit)?;
+            min2 = solver.get().bool_or(min2, tmp)?;
+            min1 = solver.get().bool_or(min1, *lit)?;
+            if min2 == PySolver::TRUE {
+                break;
+            }
+        }
+        let res = PySolver::bool_not(min2);
+        let literals = vec![res].into_boxed_slice();
+        Ok(PyBitVec { solver, literals })
     }
 }

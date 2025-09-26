@@ -64,10 +64,11 @@ class Solver(object):
         different then an error is returned.
         """
 
-    def add_variable(self) -> int:
+    def add_variable(self, count: int = 1) -> int:
         """
         Adds a new variable to the solver and returns the corresponding
-        literal as an integer.
+        literal as an integer. If more than one is requested, then the
+        first literal is returned and the rest are consecutive numbers.
         """
 
     @property
@@ -123,10 +124,19 @@ class Solver(object):
         assumptions.
         """
 
+    @property
+    def status(self) -> Optional[bool]:
+        """
+        Returns the status of the solver, which is NONE if the instance
+        has not been solved, TRUE if a solution was found, and FALSE if
+        there is no solution. This is the same value as you get as the
+        return value of the solve method.
+        """
+
     def get_value(self, lit: int) -> Optional[bool]:
         """
         Returns the value of the given literal in the last solution. The
-        state of the solver must be `True`. The returned value is
+        status of the solver must be `True`. The returned value is
         `None` if the formula is satisfied regardless of the value of the
         literal.
         """
@@ -254,6 +264,13 @@ class BitVec(object):
         then all literals must be either TRUE or FALSE.
         """
 
+    @staticmethod
+    def new_variable(self, solver: Solver, length: int) -> BitVec:
+        """
+        Constructs a new bit vector of length length filled with fresh
+        new literals from the solver.
+        """
+
     @property
     def solver(self) -> Solver:
         """
@@ -284,65 +301,100 @@ class BitVec(object):
         Returns a subslice of this vector.
         """
 
-    def __invert__(self) -> 'BitVec':
+    def __repr__(self) -> str:
+        """
+        Returns the list of literals as a string.
+        """
+
+    def get_value(self) -> BitVec:
+        """
+        When this bit vector is backed by a solver and there exists a solution,
+        then this method returns the value of these literals in the solution.
+        """
+
+    def __invert__(self) -> BitVec:
         """
         Negates all literals of this vector.
         """
 
-    def __and__(self, other: 'BitVec') -> 'BitVec':
+    def __and__(self, other: BitVec) -> BitVec:
         """
         Returns the element wise logical and of this vector and another one
         of the same length.
         """
 
-    def __or__(self, other: 'BitVec') -> 'BitVec':
+    def __or__(self, other: BitVec) -> BitVec:
         """
         Returns the element wise logical or of this vector and another one
         of the same length.
         """
 
-    def __xor__(self, other: 'BitVec') -> 'BitVec':
+    def __xor__(self, other: BitVec) -> BitVec:
         """
         Returns the element wise logical xor of this vector and another one
         of the same length.
         """
 
-    def __eq__(self, other: 'BitVec') -> 'BitVec':
+    def __eq__(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the two are equal.
         """
 
-    def __ne__(self, other: 'BitVec') -> 'BitVec':
+    def __ne__(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the two are not equal.
         """
 
-    def __le__(self, other: 'BitVec') -> 'BitVec':
+    def __le__(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the first is less than or equal
         to the other one as seen as a binary number in little endian order.
         """
 
-    def __lt__(self, other: 'BitVec') -> 'BitVec':
+    def __lt__(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the first is less than the other
         one as seen as a binary number in little endian order.
         """
 
-    def __ge__(self, other: 'BitVec') -> 'BitVec':
+    def __ge__(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the first is greater than or equal
         to the other one as seen as a binary number in little endian order.
         """
 
-    def __gt__(self, other: 'BitVec') -> 'BitVec':
+    def __gt__(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the first is greater than the other
         one as seen as a binary number in little endian order.
+        """
+
+    def fold_all(self) -> BitVec:
+        """
+        Computes the conjunction of the elements and returns a single element
+        vector.
+        """
+
+    def fold_any(self) -> BitVec:
+        """
+        Computes the disjunction of the elements and returns a single element
+        vector.
+        """
+
+    def fold_one(self) -> BitVec:
+        """
+        Computes the exactly one predicate over the given elements and returns
+        a single element vector.
+        """
+
+    def fold_amo(self) -> BitVec:
+        """
+        Computes the at most one predicate over the given elements and returns
+        a single element vector.
         """

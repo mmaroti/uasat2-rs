@@ -44,7 +44,7 @@ impl cadical::Callbacks for CheckSignal {
         }
 
         self.last = now;
-        Python::with_gil(|py| py.check_signals()).is_err()
+        Python::attach(|py| py.check_signals()).is_err()
     }
 }
 
@@ -140,12 +140,15 @@ impl PySolver {
     }
 
     /// Adds a new variable to the solver and returns the corresponding
-    /// literal as an integer.
-    pub fn add_variable(&self) -> i32 {
+    /// literal as an integer. If more than one is requested, then the
+    /// first literal is returned and the rest are consecutive numbers.
+    #[pyo3(signature = (count=1))]
+    pub fn add_variable(&self, count: u32) -> i32 {
         let mut solver = self.get_solver();
-        let var = solver.max_variable() + 1;
-        solver.reserve(var);
-        var
+        let var = solver.max_variable();
+        assert!(var as u32 + count <= i32::MAX as u32);
+        solver.reserve(var + count as i32);
+        var + 1
     }
 
     /// Returns the number of variables in the solver.
@@ -199,6 +202,15 @@ impl PySolver {
     /// assumptions.
     pub fn solve_with(&self, assumptions: Vec<i32>) -> Option<bool> {
         self.get_solver().solve_with(assumptions)
+    }
+
+    /// Returns the status of the solver, which is NONE if the instance
+    /// has not been solved, TRUE if a solution was found, and FALSE if
+    /// there is no solution. This is the same value as you get as the
+    /// return value of the solve method.
+    #[getter]
+    pub fn status(&self) -> Option<bool> {
+        self.get_solver().status()
     }
 
     /// Returns the value of the given literal in the last solution. The
@@ -376,7 +388,7 @@ impl PySolver {
             let lit = lit?.extract::<i32>()?;
             res = self.bool_and(res, lit)?;
             if res == Self::FALSE {
-                return Ok(Self::FALSE);
+                break;
             }
         }
         Ok(res)
@@ -389,7 +401,7 @@ impl PySolver {
             let lit = lit?.extract::<i32>()?;
             res = self.bool_or(res, lit)?;
             if res == Self::TRUE {
-                return Ok(Self::TRUE);
+                break;
             }
         }
         Ok(res)
@@ -405,7 +417,7 @@ impl PySolver {
             min2 = self.bool_or(min2, tmp)?;
             min1 = self.bool_or(min1, lit)?;
             if min2 == Self::TRUE {
-                return Ok(Self::FALSE);
+                break;
             }
         }
         self.bool_and(min1, Self::bool_not(min2))
@@ -421,7 +433,7 @@ impl PySolver {
             min2 = self.bool_or(min2, tmp)?;
             min1 = self.bool_or(min1, lit)?;
             if min2 == Self::TRUE {
-                return Ok(Self::FALSE);
+                break;
             }
         }
         Ok(Self::bool_not(min2))
@@ -520,8 +532,8 @@ mod tests {
         for a in lits {
             for b in lits {
                 let solver = PySolver::new();
-                assert_eq!(solver.add_variable(), 2);
-                assert_eq!(solver.add_variable(), 3);
+                assert_eq!(solver.add_variable(1), 2);
+                assert_eq!(solver.add_variable(1), 3);
                 let c = op(&solver, a, b).unwrap();
                 solver.add_clause1(2);
                 solver.add_clause1(3);
@@ -540,9 +552,9 @@ mod tests {
             for b in lits {
                 for c in lits {
                     let solver = PySolver::new();
-                    assert_eq!(solver.add_variable(), 2);
-                    assert_eq!(solver.add_variable(), 3);
-                    assert_eq!(solver.add_variable(), 4);
+                    assert_eq!(solver.add_variable(1), 2);
+                    assert_eq!(solver.add_variable(1), 3);
+                    assert_eq!(solver.add_variable(1), 4);
                     let d = op(&solver, a, b, c).unwrap();
                     solver.add_clause1(2);
                     solver.add_clause1(3);

@@ -18,7 +18,7 @@ Test module docstring.
 """
 
 from .uasat import *
-from .domain import *
+from .structure import *
 
 # __doc__ = uasat.__doc__
 # if hasattr(uasat, "__all__"):
@@ -27,9 +27,6 @@ from .domain import *
 __all__ = [
     "Solver",
     "BitVec",
-    "Domain",
-    "Product",
-    "Power",
-    "SmallSet",
-    "BOOLEAN",
+    "Operation",
+    "Relation"
 ]

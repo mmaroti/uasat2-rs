@@ -60,7 +60,7 @@ class Product(Domain):
         result = []
         start = 0
         for domain in self.domains:
-            result.append(elem.slice(start, domain.length))
+            result.append(elem.slice(start, start + domain.length))
             start += domain.length
         return result
 
@@ -99,7 +99,7 @@ class Power(Domain):
         assert len(elem) == self.length
         result = []
         for start in range(0, self.length, self.codomain.length):
-            result.append(elem.slice(start, self.codomain.length))
+            result.append(elem.slice(start, start + self.codomain.length))
         return result
 
     @typechecked

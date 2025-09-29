@@ -14,21 +14,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from uasat import *
-from uasat.structure import *
 
 
-def test_posets():
+def test_number_of_posets():
+    """
+    Counting the number of labeled 3-element posets.
+    """
+
     solver = Solver()
+    rel = Relation(3, 2, solver)
+    rel.reflexive().ensure_all()
+    rel.antisymmetric().ensure_all()
+    rel.transitive().ensure_all()
 
-    rel = Relation(2, 2, solver)
-    solver.add_clause(rel.reflexive().literals)
-    solver.add_clause(rel.symmetric().literals)
-
+    count = 0
     while solver.solve() is True:
         val = rel.get_value()
-        print(val, val.decode())
-
+        print(val.decode())
+        count += 1
         solver.add_clause(rel.table ^ val.table)
+    assert count == 19
 
 
 def test_commutative_ops():
@@ -40,10 +45,10 @@ def test_commutative_ops():
 
     while solver.solve() is True:
         oper2 = oper.get_value()
-        print(oper2, oper2.decode())
+        print(oper2.decode())
 
         solver.add_clause(oper.table ^ oper2.table)
 
 
 if __name__ == '__main__':
-    test_posets()
+    test_number_of_posets()

@@ -15,7 +15,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-use pyo3::exceptions::{PyIndexError, PyValueError};
+use pyo3::exceptions::{PyAssertionError, PyIndexError, PyValueError};
 use pyo3::prelude::*;
 
 use super::PySolver;
@@ -97,15 +97,20 @@ impl PyBitVec {
     }
 
     /// Returns a subslice of this vector.
-    pub fn slice(me: &Bound<'_, Self>, start: usize, length: usize) -> PyResult<Self> {
+    #[pyo3(signature = (start, stop, step=1))]
+    pub fn slice(me: &Bound<'_, Self>, start: usize, stop: usize, step: usize) -> PyResult<Self> {
         let literals = &me.get().literals;
-        if start + length <= literals.len() {
+        if start <= stop && stop <= literals.len() && step >= 1 {
             let solver = me.get().solver.clone_ref(me.py());
-            let literals: Vec<i32> = literals[start..(start + length)].into();
+            let literals: Vec<i32> = if step == 1 {
+                literals[start..stop].to_vec()
+            } else {
+                (start..stop).step_by(step).map(|i| literals[i]).collect()
+            };
             let literals = literals.into_boxed_slice();
             Ok(PyBitVec { solver, literals })
         } else {
-            Err(PyIndexError::new_err("invalid slice indices"))
+            Err(PyIndexError::new_err("invalid slice parameters"))
         }
     }
 
@@ -311,5 +316,34 @@ impl PyBitVec {
         let res = PySolver::bool_not(min2);
         let literals = vec![res].into_boxed_slice();
         Ok(PyBitVec { solver, literals })
+    }
+
+    pub fn ensure_all(me: &Bound<'_, Self>) -> PyResult<()> {
+        if me.get().solver.get().__bool__() {
+            for lit in me.get().literals.iter() {
+                me.get().solver.get().add_clause1(*lit);
+            }
+        } else {
+            for lit in me.get().literals.iter() {
+                if *lit != PySolver::TRUE {
+                    return Err(PyAssertionError::new_err("not all true"));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn ensure_any(me: &Bound<'_, Self>) -> PyResult<()> {
+        if me.get().solver.get().__bool__() {
+            me.get().solver.get().add_clause(me.get().literals.to_vec());
+            Ok(())
+        } else {
+            for lit in me.get().literals.iter() {
+                if *lit != PySolver::TRUE {
+                    return Ok(());
+                }
+            }
+            Err(PyAssertionError::new_err("none are true"))
+        }
     }
 }

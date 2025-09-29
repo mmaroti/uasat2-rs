@@ -19,19 +19,37 @@ from .uasat import BitVec, Solver
 
 
 class Relation:
-    def __init__(self, size: int, arity: int, table: BitVec | Solver):
+    def __init__(self, size: int, arity: int, table: List[bool] | BitVec | Solver):
         assert size >= 1 and arity >= 0
         length = size ** arity
 
         if isinstance(table, BitVec):
             assert len(table) == length
-        else:
-            assert isinstance(table, Solver)
+        elif isinstance(table, Solver):
             table = BitVec.new_variable(table, length)
+        else:
+            assert len(table) == length
+            table = BitVec(Solver.CALC, [Solver.bool_lift(b) for b in table])
 
         self.size = size
         self.arity = arity
         self.table = table
+
+    @staticmethod
+    def diagonal(size: int, arity: int = 2) -> 'Relation':
+        assert size >= 1 and arity >= 0
+
+        if size <= 1:
+            table = [Solver.TRUE]
+        else:
+            length = size ** arity
+            table = [Solver.FALSE for _ in range(length)]
+
+            step = (size ** arity - 1) // (size - 1)
+            for idx in range(0, length, step):
+                table[idx] = Solver.TRUE
+
+        return Relation(size, arity, BitVec(Solver.CALC, table))
 
     @property
     def length(self):
@@ -57,7 +75,7 @@ class Relation:
         pos = 0
         table = []
         indices = [0 for _ in range(new_arity)]
-        for _ in range(length):
+        for _ in range(self.size ** new_arity):
             table.append(self.table[pos])
             for idx in range(new_arity):
                 pos += strides[idx]
@@ -68,7 +86,46 @@ class Relation:
                 pos -= strides[idx] * self.size
 
         table = BitVec(self.solver, table)
-        return Relation(self.size, self.arity, table)
+        return Relation(self.size, new_arity, table)
+
+    def fold_any(self, count: Optional[int]):
+        if count is None:
+            count = self.arity
+        assert 0 <= count <= self.arity
+
+        step = self.size ** count
+        table = []
+        for idx in range(0, self.length, step):
+            part = self.table.slice(idx, idx + step)
+            table.append(self.solver.fold_any(part))
+        table = BitVec(self.solver, table)
+        return Relation(self.size, self.arity - count, table)
+
+    def fold_all(self, count: Optional[int]):
+        if count is None:
+            count = self.arity
+        assert 0 <= count <= self.arity
+
+        step = self.size ** count
+        table = []
+        for idx in range(0, self.length, step):
+            part = self.table.slice(idx, idx + step)
+            table.append(self.solver.fold_all(part))
+        table = BitVec(self.solver, table)
+        return Relation(self.size, self.arity - count, table)
+
+    def fold_one(self, count: Optional[int]):
+        if count is None:
+            count = self.arity
+        assert 0 <= count <= self.arity
+
+        step = self.size ** count
+        table = []
+        for idx in range(0, self.length, step):
+            part = self.table.slice(idx, idx + step)
+            table.append(self.solver.fold_one(part))
+        table = BitVec(self.solver, table)
+        return Relation(self.size, self.arity - count, table)
 
     def get_value(self) -> 'Relation':
         return Relation(self.size, self.arity, self.table.get_value())
@@ -127,6 +184,20 @@ class Relation:
         assert self.arity == 2
         return (~self | self.polymer([1, 0])).table.fold_all()
 
+    def antisymmetric(self) -> BitVec:
+        assert self.arity == 2
+        rel = self & self.polymer([1, 0])
+        rel = ~rel | Relation.diagonal(self.size, 2)
+        return rel.table.fold_all()
+
+    def compose(self, other: 'Relation') -> 'Relation':
+        assert self.arity == other.arity == 2
+        return (self.polymer([1, 0], 3) & self.polymer([0, 2], 3)).fold_any(1)
+
+    def transitive(self) -> BitVec:
+        assert self.arity == 2
+        return (~self.compose(self) | self).table.fold_all()
+
 
 class Operation:
     def __init__(self, size: int, arity: int, table: BitVec | Solver):
@@ -139,12 +210,19 @@ class Operation:
             assert isinstance(table, Solver)
             table = BitVec.new_variable(table, length)
             for start in range(0, length, size):
-                part = table.slice(start, size)
+                part = table.slice(start, start + size)
                 table.solver.add_clause1(table.solver.fold_one(part.literals))
 
         self.size = size
         self.arity = arity
         self.table = table
+
+    @staticmethod
+    def projection(size: int, arity: int, coord: int) -> 'Relation':
+        assert 1 <= size and 0 <= coord < arity
+
+        table = Relation.diagonal(size, 2).polymer([0, coord + 1], arity + 1)
+        return Operation(size, arity, table.table)
 
     @property
     def length(self):
@@ -153,6 +231,10 @@ class Operation:
     @property
     def solver(self):
         return self.table.solver
+
+    @property
+    def graph(self) -> Relation:
+        return Relation(self.size, self.arity + 1, self.table)
 
     def polymer(self, new_vars: List[int], new_arity: Optional[int] = None) -> 'Operation':
         assert len(new_vars) == self.arity
@@ -170,7 +252,7 @@ class Operation:
         pos = 0
         table = []
         indices = [0 for _ in range(new_arity)]
-        for _ in range(length // self.size):
+        for _ in range(self.size ** new_arity):
             for pos2 in range(pos, pos + self.size):
                 table.append(self.table[pos2])
             for idx in range(new_arity):
@@ -182,7 +264,7 @@ class Operation:
                 pos -= strides[idx] * self.size
 
         table = BitVec(self.solver, table)
-        return Operation(self.size, self.arity, table)
+        return Operation(self.size, new_arity, table)
 
     def get_value(self) -> 'Operation':
         return Operation(self.size, self.arity, self.table.get_value())

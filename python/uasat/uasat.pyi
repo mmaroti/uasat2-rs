@@ -296,7 +296,7 @@ class BitVec(object):
         Returns the given literal in this vector.
         """
 
-    def slice(self, start: int, length: int) -> BitVec:
+    def slice(self, start: int, stop: int, step: int = 1) -> BitVec:
         """
         Returns a subslice of this vector.
         """
@@ -397,4 +397,20 @@ class BitVec(object):
         """
         Computes the at most one predicate over the given elements and returns
         a single element vector.
+        """
+
+    def ensure_all(self):
+        """
+        Makes sure that all literal in this bit vector is true. If this is a
+        solver instance, then all literals are forced true with a new clause.
+        If this is a calculator instance, then an assertion error is thrown
+        if not all literals are true.
+        """
+
+    def ensure_any(self):
+        """
+        Makes sure that at least one literal in this bit vector is true. If
+        this is a solver instance, then a single clause is added to the solver.
+        If this is a calculator instance, then an assertion error is thrown
+        if all literals are false.
         """

@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import List
-from uasat import *
+from uasat import Solver, BitVec
 
 
 def test_signature():
@@ -38,7 +38,7 @@ def test_join():
 
     other = Solver()
     try:
-        solver | other
+        unused = solver | other
         assert False
     except ValueError:
         pass
@@ -116,12 +116,12 @@ def test_bitvec():
         for b in range(8):
             v3 = BitVec(Solver.CALC, bits(b))
 
-            check(v1 == v3, v2 == v3)
-            check(v1 != v3, v2 != v3)
-            check(v1 != v3, ~(v2 == v3))
-            check(v1 <= v3, v2 <= v3)
-            check(v1 > v3, v2 > v3)
-            check(v1 > v3, ~(v2 <= v3))
-            check(v1 < v3, v2 < v3)
-            check(v1 >= v3, v2 >= v3)
-            check(v1 >= v3, ~(v2 < v3))
+            check(v1.comp_eq(v3), v2.comp_eq(v3))
+            check(v1.comp_ne(v3), v2.comp_ne(v3))
+            check(v1.comp_ne(v3), ~(v2.comp_eq(v3)))
+            check(v1.comp_le(v3), v2.comp_le(v3))
+            check(v1.comp_gt(v3), v2.comp_gt(v3))
+            check(v1.comp_gt(v3), ~(v2.comp_le(v3)))
+            check(v1.comp_lt(v3), v2.comp_lt(v3))
+            check(v1.comp_ge(v3), v2.comp_ge(v3))
+            check(v1.comp_ge(v3), ~(v2.comp_lt(v3)))

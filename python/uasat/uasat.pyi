@@ -265,7 +265,7 @@ class BitVec(object):
         """
 
     @staticmethod
-    def new_variable(self, solver: Solver, length: int) -> BitVec:
+    def new_variable(solver: Solver, length: int) -> BitVec:
         """
         Constructs a new bit vector of length length filled with fresh
         new literals from the solver.
@@ -335,40 +335,40 @@ class BitVec(object):
         of the same length.
         """
 
-    def __eq__(self, other: BitVec) -> BitVec:
+    def comp_eq(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the two are equal.
         """
 
-    def __ne__(self, other: BitVec) -> BitVec:
+    def comp_ne(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the two are not equal.
         """
 
-    def __le__(self, other: BitVec) -> BitVec:
+    def comp_le(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the first is less than or equal
         to the other one as seen as a binary number in little endian order.
         """
 
-    def __lt__(self, other: BitVec) -> BitVec:
+    def comp_lt(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the first is less than the other
         one as seen as a binary number in little endian order.
         """
 
-    def __ge__(self, other: BitVec) -> BitVec:
+    def comp_ge(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the first is greater than or equal
         to the other one as seen as a binary number in little endian order.
         """
 
-    def __gt__(self, other: BitVec) -> BitVec:
+    def comp_gt(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
         TRUE in a single element vector if the first is greater than the other

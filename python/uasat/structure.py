@@ -97,7 +97,7 @@ class Relation:
         table = []
         for idx in range(0, self.length, step):
             part = self.table.slice(idx, idx + step)
-            table.append(self.solver.fold_any(part))
+            table.append(self.solver.fold_any(part.literals))
         table = BitVec(self.solver, table)
         return Relation(self.size, self.arity - count, table)
 
@@ -110,7 +110,7 @@ class Relation:
         table = []
         for idx in range(0, self.length, step):
             part = self.table.slice(idx, idx + step)
-            table.append(self.solver.fold_all(part))
+            table.append(self.solver.fold_all(part.literals))
         table = BitVec(self.solver, table)
         return Relation(self.size, self.arity - count, table)
 
@@ -123,11 +123,11 @@ class Relation:
         table = []
         for idx in range(0, self.length, step):
             part = self.table.slice(idx, idx + step)
-            table.append(self.solver.fold_one(part))
+            table.append(self.solver.fold_one(part.literals))
         table = BitVec(self.solver, table)
         return Relation(self.size, self.arity - count, table)
 
-    def get_value(self) -> 'Relation':
+    def solution(self) -> 'Relation':
         return Relation(self.size, self.arity, self.table.get_value())
 
     def decode(self) -> List[bool]:
@@ -137,29 +137,29 @@ class Relation:
     def __repr__(self) -> str:
         return str(self.table)
 
-    def __eq__(self, other: 'Operation') -> BitVec:
+    def comp_eq(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table == other.table
+        return self.table.comp_eq(other.table)
 
-    def __ne__(self, other: 'Operation') -> BitVec:
+    def comp_ne(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table != other.table
+        return self.table.comp_ne(other.table)
 
-    def __le__(self, other: 'Operation') -> BitVec:
+    def comp_le(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table <= other.table
+        return self.table.comp_le(other.table)
 
-    def __lt__(self, other: 'Operation') -> BitVec:
+    def comp_lt(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table < other.table
+        return self.table.comp_lt(other.table)
 
-    def __ge__(self, other: 'Operation') -> BitVec:
+    def comp_ge(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table >= other.table
+        return self.table.comp_ge(other.table)
 
-    def __gt__(self, other: 'Operation') -> BitVec:
+    def comp_gt(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table > other.table
+        return self.table.comp_gt(other.table)
 
     def __invert__(self) -> 'Relation':
         return Relation(self.size, self.arity, ~self.table)
@@ -218,11 +218,19 @@ class Operation:
         self.table = table
 
     @staticmethod
-    def projection(size: int, arity: int, coord: int) -> 'Relation':
+    def projection(size: int, arity: int, coord: int) -> 'Operation':
         assert 1 <= size and 0 <= coord < arity
 
         table = Relation.diagonal(size, 2).polymer([0, coord + 1], arity + 1)
         return Operation(size, arity, table.table)
+
+    @staticmethod
+    def element(size: int, index: int) -> 'Operation':
+        assert 0 <= index < size
+
+        table = [Solver.FALSE for _ in range(size)]
+        table[index] = Solver.TRUE
+        return Operation(size, 0, BitVec(Solver.CALC, table))
 
     @property
     def length(self):
@@ -266,7 +274,7 @@ class Operation:
         table = BitVec(self.solver, table)
         return Operation(self.size, new_arity, table)
 
-    def get_value(self) -> 'Operation':
+    def solution(self) -> 'Operation':
         return Operation(self.size, self.arity, self.table.get_value())
 
     def decode(self) -> List[int]:
@@ -283,26 +291,26 @@ class Operation:
     def __repr__(self) -> str:
         return str(self.table)
 
-    def __eq__(self, other: 'Operation') -> BitVec:
+    def comp_eq(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table == other.table
+        return self.table.comp_eq(other.table)
 
-    def __ne__(self, other: 'Operation') -> BitVec:
+    def comp_ne(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table != other.table
+        return self.table.comp_ne(other.table)
 
-    def __le__(self, other: 'Operation') -> BitVec:
+    def comp_le(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table <= other.table
+        return self.table.comp_le(other.table)
 
-    def __lt__(self, other: 'Operation') -> BitVec:
+    def comp_lt(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table < other.table
+        return self.table.comp_lt(other.table)
 
-    def __ge__(self, other: 'Operation') -> BitVec:
+    def comp_ge(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table >= other.table
+        return self.table.comp_ge(other.table)
 
-    def __gt__(self, other: 'Operation') -> BitVec:
+    def comp_gt(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
-        return self.table > other.table
+        return self.table.comp_gt(other.table)

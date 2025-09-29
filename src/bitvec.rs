@@ -189,7 +189,7 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __eq__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
+    pub fn comp_eq(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
@@ -205,14 +205,14 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __ne__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
-        let mut res = Self::__eq__(me, other)?;
+    pub fn comp_ne(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
+        let mut res = Self::comp_eq(me, other)?;
         let lit = PySolver::bool_not(res.literals[0]);
         res.literals = vec![lit].into_boxed_slice();
         Ok(res)
     }
 
-    pub fn __le__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
+    pub fn comp_le(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
@@ -228,14 +228,14 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __gt__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
-        let mut res = Self::__le__(me, other)?;
+    pub fn comp_gt(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
+        let mut res = Self::comp_le(me, other)?;
         let lit = PySolver::bool_not(res.literals[0]);
         res.literals = vec![lit].into_boxed_slice();
         Ok(res)
     }
 
-    pub fn __ge__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
+    pub fn comp_ge(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
         let solver = PySolver::join(me.py(), &me.get().solver, &other.solver)?;
         if me.get().literals.len() != other.literals.len() {
             return Err(PyValueError::new_err("length mismatch"));
@@ -251,8 +251,8 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    pub fn __lt__(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
-        let mut res = Self::__ge__(me, other)?;
+    pub fn comp_lt(me: &Bound<'_, Self>, other: &Self) -> PyResult<Self> {
+        let mut res = Self::comp_ge(me, other)?;
         let lit = PySolver::bool_not(res.literals[0]);
         res.literals = vec![lit].into_boxed_slice();
         Ok(res)

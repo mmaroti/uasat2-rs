@@ -14,7 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Test module docstring.
+UASAT library making it easy to work with a SAT solver and solve problems
+related to universal algebra.
 """
 
 from .uasat import *

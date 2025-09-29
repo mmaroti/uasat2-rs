@@ -40,10 +40,10 @@ class Domain:
     def bool_iff(self, elem0: BitVec, elem1: BitVec, elem2: BitVec) -> BitVec:
         assert len(elem0) == 1 and len(elem1) == len(elem2) == self.length
         solver = elem0.solver or elem1.solver or elem2.solver
-        test = elem0.lits[0]
+        test = elem0.literals[0]
         lits = [solver.bool_iff(test, l1, l2)
                 for l1, l2 in zip(elem1.literals, elem2.literals)]
-        return BitVec[self, elem0.solver, lits]
+        return BitVec(elem0.solver, lits)
 
 
 class Product(Domain):
@@ -225,5 +225,5 @@ class Operator:
     def __call__(self, *args: Domain):
         assert len(args) == self.arity
         for domain, arg in zip(self.domains, args):
-            assert domain.length == len(arg)
+            assert domain.length == len(args)
         raise NotImplementedError()

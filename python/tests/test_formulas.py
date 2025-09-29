@@ -13,14 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from uasat.formulas import *
+from uasat.formulas import Domain, Relation
 
 
 def test_formulas():
     dom = Domain("dom", 3)
-    rel = Symbol("rel", [dom, dom])
+    rel = Relation("rel", [dom, dom])
     frm = dom.forall(lambda x, y, z: ~rel(x, y) | ~rel(y, z) | rel(x, z))
     print(frm)
+    print(rel.functional())
+    print(rel.existential())
 
 
 if __name__ == '__main__':

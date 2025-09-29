@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Callable, List, Set, Optional
+from typing import Callable, List, Optional, Set
 
 
 class Domain:
@@ -31,7 +31,11 @@ class Domain:
         Variable.next_index += num_vars
         formula = callable(*vars)
         Variable.next_index -= num_vars
-        return ForAll(vars, formula)
+
+        if isinstance(formula, ForAll):
+            return ForAll(vars + formula.variables, formula.formula)
+        else:
+            return ForAll(vars, formula)
 
     def exists(self, callable: Callable[..., 'Formula'],
                num_vars: Optional[int] = None) -> 'Formula':
@@ -43,7 +47,11 @@ class Domain:
         Variable.next_index += num_vars
         formula = callable(*vars)
         Variable.next_index -= num_vars
-        return Exists(vars, formula)
+
+        if isinstance(formula, Exists):
+            return Exists(vars + formula.variables, formula.formula)
+        else:
+            return Exists(vars, formula)
 
 
 class Variable:
@@ -56,8 +64,11 @@ class Variable:
     def __str__(self) -> str:
         return "X" + str(self.index)
 
+    def __eq__(self, other: 'Variable') -> 'Formula':
+        return Equ(self, other)
 
-class Symbol:
+
+class Relation:
     def __init__(self, name: str, domains: List[Domain]):
         self.name = name
         self.domains = domains
@@ -66,9 +77,35 @@ class Symbol:
     def arity(self) -> int:
         return len(self.domains)
 
-    def __call__(self, *variables: List[Variable]) -> 'Formula':
+    def __call__(self, *variables: Variable) -> 'Formula':
         assert len(variables) == self.arity
-        return Atomic(self, variables)
+        return Atomic(self, list(variables))
+
+    def functional(self) -> 'Formula':
+        assert len(self.domains) >= 1
+
+        def build(vars, pos: int) -> 'Formula':
+            if pos + 1 < len(self.domains):
+                return self.domains[pos].forall(
+                    lambda x: build(vars + [x], pos + 1))
+            else:
+                return self.domains[-1].forall(
+                    lambda x, y: ~self(*vars, x) | ~self(*vars, y) | (x == y))
+
+        return build([], 0)
+
+    def existential(self) -> 'Formula':
+        assert len(self.domains) >= 1
+
+        def build(vars, pos: int) -> 'Formula':
+            if pos + 1 < len(self.domains):
+                return self.domains[pos].forall(
+                    lambda x: build(vars + [x], pos + 1))
+            else:
+                return self.domains[-1].exists(
+                    lambda x: self(*vars, x))
+
+        return build([], 0)
 
 
 class Formula:
@@ -123,9 +160,9 @@ class Formula:
 
 
 class Atomic(Formula):
-    def __init__(self, symbol: Symbol, variables: List[Variable]):
-        assert symbol.domains == [var.domain for var in variables]
-        self.symbol = symbol
+    def __init__(self, relation: Relation, variables: List[Variable]):
+        assert relation.domains == [var.domain for var in variables]
+        self.symbol = relation
         self.variables = variables
 
     @property
@@ -139,6 +176,8 @@ class Atomic(Formula):
 
 class ForAll(Formula):
     def __init__(self, variables: List[Variable], formula: Formula):
+        assert all(isinstance(var, Variable) for var in variables)
+        assert isinstance(formula, Formula)
         self.variables = variables
         self.formula = formula
 
@@ -149,24 +188,31 @@ class ForAll(Formula):
     @property
     def free_variables(self) -> Set[Variable]:
         vars = self.formula.free_variables
-        vars.remove(self.variable)
+        vars.difference_update(self.variables)
         return vars
 
 
 class Exists(Formula):
-    def __init__(self, variable: Variable, formula: Formula):
-        self.variable = variable
+    def __init__(self, variables: List[Variable], formula: Formula):
+        assert all(isinstance(var, Variable) for var in variables)
+        assert isinstance(formula, Formula)
+        self.variables = variables
         self.formula = formula
+
+    def __str__(self) -> str:
+        return "?[" + ",".join(str(v) for v in self.variables) + "]: " \
+            + str(self.formula)
 
     @property
     def free_variables(self) -> Set[Variable]:
         vars = self.formula.free_variables
-        vars.remove(self.variable)
+        vars.difference_update(self.variables)
         return vars
 
 
 class Not(Formula):
     def __init__(self, formula: Formula):
+        assert isinstance(formula, Formula)
         self.formula = formula
 
     def __invert__(self) -> 'Formula':
@@ -181,7 +227,8 @@ class Not(Formula):
 
 
 class And(Formula):
-    def __init__(self, *formulas: List[Formula]):
+    def __init__(self, *formulas: Formula):
+        assert all(isinstance(fml, Formula) for fml in formulas)
         self.formulas = formulas
 
     def __str__(self) -> str:
@@ -196,7 +243,8 @@ class And(Formula):
 
 
 class Or(Formula):
-    def __init__(self, *formulas: List[Formula]):
+    def __init__(self, *formulas: Formula):
+        assert all(isinstance(fml, Formula) for fml in formulas)
         self.formulas = formulas
 
     def __str__(self) -> str:
@@ -211,7 +259,7 @@ class Or(Formula):
 
 
 class Xor(Formula):
-    def __init__(self, *formulas: List[Formula]):
+    def __init__(self, *formulas: Formula):
         self.formulas = formulas
 
     def __str__(self) -> str:
@@ -223,3 +271,17 @@ class Xor(Formula):
         for formula in self.formulas:
             vars.update(formula.free_variables)
         return vars
+
+
+class Equ(Formula):
+    def __init__(self, var1: Variable, var2: Variable):
+        assert isinstance(var1, Variable) and isinstance(var2, Variable)
+        self.var1 = var1
+        self.var2 = var2
+
+    def __str__(self) -> str:
+        return str(self.var1) + "=" + str(self.var2)
+
+    @property
+    def free_variables(self) -> Set[Variable]:
+        return set((self.var1, self.var2))

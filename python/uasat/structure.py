@@ -36,7 +36,7 @@ class Relation:
         self.table = table
 
     @staticmethod
-    def diagonal(size: int, arity: int = 2) -> 'Relation':
+    def diag_relation(size: int, arity: int = 2) -> 'Relation':
         assert size >= 1 and arity >= 0
 
         if size <= 1:
@@ -50,6 +50,30 @@ class Relation:
                 table[idx] = Solver.TRUE
 
         return Relation(size, arity, BitVec(Solver.CALC, table))
+
+    @staticmethod
+    def full_relation(size: int, arity: int) -> 'Relation':
+        assert size >= 1 and arity >= 0
+
+        length = size ** arity
+        table = [Solver.TRUE for _ in range(length)]
+        return Relation(size, arity, BitVec(Solver.CALC, table))
+
+    @staticmethod
+    def empty_relation(size: int, arity: int) -> 'Relation':
+        assert size >= 1 and arity >= 0
+
+        length = size ** arity
+        table = [Solver.FALSE for _ in range(length)]
+        return Relation(size, arity, BitVec(Solver.CALC, table))
+
+    @staticmethod
+    def const_relation(size: int, arity: int, solver: Solver, value: int) -> 'Relation':
+        assert size >= 1 and arity >= 0
+
+        length = size ** arity
+        table = [value for _ in range(length)]
+        return Relation(size, arity, BitVec(solver, table))
 
     @property
     def length(self):
@@ -187,7 +211,7 @@ class Relation:
     def antisymmetric(self) -> BitVec:
         assert self.arity == 2
         rel = self & self.polymer([1, 0])
-        rel = ~rel | Relation.diagonal(self.size, 2)
+        rel = ~rel | Relation.diag_relation(self.size, 2)
         return rel.table.fold_all()
 
     def compose(self, other: 'Relation') -> 'Relation':
@@ -200,18 +224,23 @@ class Relation:
 
 
 class Operation:
-    def __init__(self, size: int, arity: int, table: BitVec | Solver):
+    def __init__(self, size: int, arity: int, table: List[int] | BitVec | Solver):
         assert size >= 1 and arity >= 0
         length = size ** (arity + 1)
 
         if isinstance(table, BitVec):
             assert len(table) == length
-        else:
-            assert isinstance(table, Solver)
+        elif isinstance(table, Solver):
             table = BitVec.new_variable(table, length)
             for start in range(0, length, size):
-                part = table.slice(start, start + size)
-                table.solver.add_clause1(table.solver.fold_one(part.literals))
+                table.slice(start, start + size).ensure_one()
+        else:
+            table2 = [Solver.FALSE for _ in range(length)]
+            assert len(table) == length // size
+            for idx, val in enumerate(table):
+                assert 0 <= val < size
+                table2[idx * size + val] = Solver.TRUE
+            table = BitVec(Solver.CALC, table2)
 
         self.size = size
         self.arity = arity
@@ -221,11 +250,12 @@ class Operation:
     def projection(size: int, arity: int, coord: int) -> 'Operation':
         assert 1 <= size and 0 <= coord < arity
 
-        table = Relation.diagonal(size, 2).polymer([0, coord + 1], arity + 1)
+        table = Relation.diag_relation(
+            size, 2).polymer([0, coord + 1], arity + 1)
         return Operation(size, arity, table.table)
 
     @staticmethod
-    def element(size: int, index: int) -> 'Operation':
+    def constant(size: int, index: int) -> 'Operation':
         assert 0 <= index < size
 
         table = [Solver.FALSE for _ in range(size)]
@@ -290,6 +320,23 @@ class Operation:
 
     def __repr__(self) -> str:
         return str(self.table)
+
+    def evaluate(self, args: List['Operation']) -> 'Operation':
+        assert self.arity == len(args) and self.arity >= 1
+        new_arity = args[0].arity
+        total = self.arity + 1 + new_arity
+
+        # 0..arity-1: temporary, arity: output, arity+1..arity+new_arity: input
+        rel = self.graph.polymer(
+            [self.arity] + list(range(0, self.arity)),
+            total)
+        for idx, arg in enumerate(args):
+            rel &= arg.graph.polymer(
+                [idx] + list(range(self.arity + 1, total)),
+                total)
+        rel = rel.fold_any(self.arity)
+        rel.fold_one(1).table.ensure_all()
+        return Operation(self.size, new_arity, rel.table)
 
     def comp_eq(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity

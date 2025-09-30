@@ -116,9 +116,9 @@ impl PyBitVec {
 
     /// When this bit vector is backed by a solver and there exists a solution,
     /// then this method returns the value of these literals in the solution.
-    pub fn get_value(me: &Bound<'_, Self>) -> PyResult<Self> {
+    pub fn get_value(me: &Bound<'_, Self>) -> PyResult<Py<Self>> {
         if !me.get().solver.get().__bool__() {
-            Err(PyValueError::new_err("calculator instance"))
+            Ok(me.clone().unbind())
         } else if me.get().solver.get().status() != Some(true) {
             Err(PyValueError::new_err("instance not solved"))
         } else {
@@ -129,7 +129,7 @@ impl PyBitVec {
             }
             let solver = me.py().get_type::<PySolver>().getattr("CALC")?.extract()?;
             let literals = literals.into_boxed_slice();
-            Ok(PyBitVec { solver, literals })
+            Ok(Py::new(me.py(), PyBitVec { solver, literals })?)
         }
     }
 

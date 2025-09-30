@@ -321,7 +321,7 @@ class Operation:
     def __repr__(self) -> str:
         return str(self.table)
 
-    def evaluate(self, args: List['Operation']) -> 'Operation':
+    def compose(self, args: List['Operation']) -> 'Operation':
         assert self.arity == len(args) and self.arity >= 1
         new_arity = args[0].arity
         total = self.arity + 1 + new_arity

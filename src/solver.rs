@@ -198,7 +198,7 @@ impl PySolver {
         if let Some(val) = self.get_solver().solve() {
             Ok(val)
         } else {
-            Err(PyRuntimeError::new_err("terminated"))
+            Err(PyRuntimeError::new_err("solver terminated"))
         }
     }
 

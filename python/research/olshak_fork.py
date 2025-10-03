@@ -57,7 +57,7 @@ class SmallAlg(Algebra):
 
     def element(self, index: int) -> BitVec:
         assert 0 <= index < self.size
-        return Operation.constant(self.size, index).table
+        return Operation.new_const(self.size, index).table
 
     def decode_elem(self, elem: BitVec) -> Any:
         return Operation(self.size, 0, elem.get_value()).decode()[0]
@@ -68,7 +68,7 @@ class SmallAlg(Algebra):
     def __repr__(self) -> str:
         result = "SmallAlg([\n"
         for op in self.operations:
-            result += f"    Operation({op.size}, {op.arity}, {op.decode()}),\n"
+            result += f"    {op},\n"
         result += "]),"
         return result
 
@@ -230,9 +230,9 @@ def find_algebra(multi_steps: List[List[List[int]]], size: int = 2) -> Optional[
     f1.polymer([0, 1, 0, 1]).comp_eq(
         g1.polymer([0, 1, 0, 1])).ensure_all()
 
-    Operation.projection(alg.size, 2, 0).comp_eq(
+    Operation.new_proj(alg.size, 2, 0).comp_eq(
         f1.polymer([0, 0, 0, 1])).ensure_all()
-    Operation.projection(alg.size, 2, 1).comp_eq(
+    Operation.new_proj(alg.size, 2, 1).comp_eq(
         g1.polymer([0, 0, 0, 1])).ensure_all()
 
     elem0 = alg.element(0)

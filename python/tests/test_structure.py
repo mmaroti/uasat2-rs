@@ -24,7 +24,7 @@ def test_number_of_posets():
     solver = uasat.Solver()
     rel = uasat.Relation(3, 2, solver)
     rel.reflexive().ensure_all()
-    rel.antisymmetric().ensure_all()
+    rel.antisymm().ensure_all()
     rel.transitive().ensure_all()
 
     count = 0

@@ -363,4 +363,21 @@ impl PyBitVec {
         solver.add_clause1(res);
         Ok(())
     }
+
+    pub fn ensure_amo(me: &Bound<'_, Self>) -> PyResult<()> {
+        let solver = me.get().solver.get();
+        let mut min1 = PySolver::FALSE;
+        let mut min2 = PySolver::FALSE;
+        for lit in me.get().literals.iter() {
+            let tmp = solver.bool_and(min1, *lit)?;
+            min2 = solver.bool_or(min2, tmp)?;
+            min1 = solver.bool_or(min1, *lit)?;
+            if min2 == PySolver::TRUE {
+                break;
+            }
+        }
+        let res = PySolver::bool_not(min2);
+        solver.add_clause1(res);
+        Ok(())
+    }
 }

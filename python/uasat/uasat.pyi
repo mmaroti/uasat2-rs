@@ -422,3 +422,11 @@ class BitVec(object):
         If this is a calculator instance, then an assertion error is thrown
         if all literals are false.
         """
+
+    def ensure_amo(self):
+        """
+        Makes sure that at most one literal in this bit vector is true. If
+        this is a solver instance, then a single clause is added to the solver.
+        If this is a calculator instance, then an assertion error is thrown
+        if all literals are false.
+        """

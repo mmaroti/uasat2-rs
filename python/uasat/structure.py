@@ -35,6 +35,14 @@ class Relation:
         self.arity = arity
         self.table = table
 
+    @property
+    def length(self):
+        return len(self.table)
+
+    @property
+    def solver(self):
+        return self.table.solver
+
     @staticmethod
     def diag_relation(size: int, arity: int = 2) -> 'Relation':
         assert size >= 1 and arity >= 0
@@ -53,19 +61,11 @@ class Relation:
 
     @staticmethod
     def full_relation(size: int, arity: int) -> 'Relation':
-        assert size >= 1 and arity >= 0
-
-        length = size ** arity
-        table = [Solver.TRUE for _ in range(length)]
-        return Relation(size, arity, BitVec(Solver.CALC, table))
+        return Relation.const_relation(size, arity, Solver.CALC, Solver.TRUE)
 
     @staticmethod
     def empty_relation(size: int, arity: int) -> 'Relation':
-        assert size >= 1 and arity >= 0
-
-        length = size ** arity
-        table = [Solver.FALSE for _ in range(length)]
-        return Relation(size, arity, BitVec(Solver.CALC, table))
+        return Relation.const_relation(size, arity, Solver.CALC, Solver.FALSE)
 
     @staticmethod
     def const_relation(size: int, arity: int, solver: Solver, value: int) -> 'Relation':
@@ -74,14 +74,6 @@ class Relation:
         length = size ** arity
         table = [value for _ in range(length)]
         return Relation(size, arity, BitVec(solver, table))
-
-    @property
-    def length(self):
-        return len(self.table)
-
-    @property
-    def solver(self):
-        return self.table.solver
 
     def polymer(self, new_vars: List[int], new_arity: Optional[int] = None) -> 'Relation':
         assert len(new_vars) == self.arity
@@ -155,7 +147,7 @@ class Relation:
         return Relation(self.size, self.arity, self.table.get_value())
 
     def decode(self) -> List[bool]:
-        assert not self.table.solver
+        assert not self.solver
         return [self.table[i] == Solver.TRUE for i in range(self.length)]
 
     def __repr__(self) -> str:

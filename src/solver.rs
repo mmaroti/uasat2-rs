@@ -15,7 +15,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, SystemTime};
@@ -193,15 +193,23 @@ impl PySolver {
     /// Solves the formula defined by the added clauses. If the formula is
     /// satisfiable, then `Some(true)` is returned. If the formula is
     /// unsatisfiable, then `Some(false)` is returned. If the solver runs out
-    /// of resources or was terminated, then `None` is returned.
-    pub fn solve(&self) -> Option<bool> {
-        self.get_solver().solve()
+    /// of resources or was terminated, then an error is raised.
+    pub fn solve(&self) -> PyResult<bool> {
+        if let Some(val) = self.get_solver().solve() {
+            Ok(val)
+        } else {
+            Err(PyRuntimeError::new_err("terminated"))
+        }
     }
 
     /// Solves the formula defined by the set of clauses under the given
     /// assumptions.
-    pub fn solve_with(&self, assumptions: Vec<i32>) -> Option<bool> {
-        self.get_solver().solve_with(assumptions)
+    pub fn solve_with(&self, assumptions: Vec<i32>) -> PyResult<bool> {
+        if let Some(val) = self.get_solver().solve_with(assumptions) {
+            Ok(val)
+        } else {
+            Err(PyRuntimeError::new_err("terminated"))
+        }
     }
 
     /// Returns the status of the solver, which is NONE if the instance
@@ -537,7 +545,7 @@ mod tests {
                 let c = op(&solver, a, b).unwrap();
                 solver.add_clause1(2);
                 solver.add_clause1(3);
-                assert_eq!(solver.solve(), Some(true));
+                assert_eq!(solver.solve().unwrap(), true);
                 let a = solver.get_value(a).unwrap();
                 let b = solver.get_value(b).unwrap();
                 let c = solver.get_value(c).unwrap();
@@ -559,7 +567,7 @@ mod tests {
                     solver.add_clause1(2);
                     solver.add_clause1(3);
                     solver.add_clause1(4);
-                    assert_eq!(solver.solve(), Some(true));
+                    assert_eq!(solver.solve().unwrap(), true);
                     let a = solver.get_value(a).unwrap();
                     let b = solver.get_value(b).unwrap();
                     let c = solver.get_value(c).unwrap();

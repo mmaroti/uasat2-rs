@@ -110,15 +110,15 @@ class Solver(object):
         Returns the number of clauses in the solver.
         """
 
-    def solve(self) -> Optional[bool]:
+    def solve(self) -> bool:
         """
         Solves the formula defined by the added clauses. If the formula is
         satisfiable, then `True` is returned. If the formula is
         unsatisfiable, then `False` is returned. If the solver runs out
-        of resources or was terminated, then `None` is returned.
+        of resources or was terminated, then an error is raised.
         """
 
-    def solve_with(self, assumptions: List[int]) -> Optional[bool]:
+    def solve_with(self, assumptions: List[int]) -> bool:
         """
         Solves the formula defined by the set of clauses under the given
         assumptions.

@@ -4,12 +4,19 @@ build-backend = "maturin"
 
 [project]
 name = "uasat"
+authors = [{ name = "Miklos Maroti", email = "mmaroti@gmail.com" }]
+description = "A python library for using SAT solvers for universal algebraic research"
+readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Topic :: Scientific/Engineering :: Mathematics",
 ]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 dependencies = ["typeguard>=4.1"]
 dynamic = ["version"]
 

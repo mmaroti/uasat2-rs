@@ -25,5 +25,6 @@ tests = ["pytest"]
 
 [tool.maturin]
 python-source = "python"
+module-name = "uasat._uasat"
 features = ["pyo3/extension-module"]
 strip = true

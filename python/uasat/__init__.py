@@ -18,7 +18,7 @@ UASAT library making it easy to work with a SAT solver and solve problems
 related to universal algebra.
 """
 
-from .uasat import *
+from ._uasat import *
 from .structure import *
 
 # __doc__ = uasat.__doc__
@@ -28,6 +28,7 @@ from .structure import *
 __all__ = [
     "Solver",
     "BitVec",
+    "Relation",
+    "PartialOp",
     "Operation",
-    "Relation"
 ]

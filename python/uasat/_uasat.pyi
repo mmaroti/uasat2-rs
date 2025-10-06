@@ -50,6 +50,10 @@ class Solver(object):
         """
 
     CALC: Solver
+    """
+    A static calculator instance that supports all the standard boolean
+    operations but does not allow any SAT solving.
+    """  # pylint: disable=W0105
 
     def __bool__(self) -> bool:
         """

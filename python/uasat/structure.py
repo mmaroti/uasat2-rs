@@ -15,7 +15,7 @@
 
 from typing import List, Optional
 
-from .uasat import BitVec, Solver
+from ._uasat import BitVec, Solver
 
 
 class Relation:
@@ -206,6 +206,9 @@ class Relation:
         return Relation(self.size, self.arity, self.table ^ other.table)
 
     def reflexive(self) -> BitVec:
+        """
+        Returns TRUE (a single element BitVec) if this relation is reflexive.
+        """
         diag = self.polymer([0 for _ in range(self.arity)])
         return diag.table.fold_all()
 

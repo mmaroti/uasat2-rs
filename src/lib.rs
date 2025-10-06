@@ -25,6 +25,7 @@ use pyo3::prelude::*;
 
 /// The uasat module implemented in Rust.
 #[pymodule]
+#[pyo3(name = "_uasat")]
 fn uasat(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PySolver>()?;
     m.add_class::<PyBitVec>()?;

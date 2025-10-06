@@ -17,7 +17,7 @@ import math
 from typeguard import typechecked
 from typing import List
 
-from .uasat import Solver, BitVec
+from ._uasat import Solver, BitVec
 
 
 class Domain:

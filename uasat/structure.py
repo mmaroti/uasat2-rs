@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from ._uasat import BitVec, Solver
 
@@ -75,7 +75,22 @@ class Relation:
         table = [value for _ in range(length)]
         return Relation(size, arity, BitVec(solver, table))
 
-    def polymer(self, new_vars: List[int], new_arity: Optional[int] = None) -> 'Relation':
+    @staticmethod
+    def new_singleton(size: int, coord: List[int]) -> 'Relation':
+        assert size >= 1
+
+        length = size ** len(coord)
+        table = [Solver.FALSE for _ in range(length)]
+
+        pos = 0
+        for c in reversed(coord):
+            pos *= size
+            pos += c
+        table[pos] = Solver.TRUE
+
+        return Relation(size, len(coord), BitVec(Solver.CALC, table))
+
+    def polymer(self, new_vars: Sequence[int], new_arity: Optional[int] = None) -> 'Relation':
         assert len(new_vars) == self.arity
         if new_arity is None:
             new_arity = max(new_vars) + 1
@@ -103,6 +118,27 @@ class Relation:
 
         table = BitVec(self.solver, table)
         return Relation(self.size, new_arity, table)
+
+    def polymer_swap(self, var0: int, var1: int) -> 'Relation':
+        assert 0 <= var0 < self.arity and 0 <= var1 < self.arity
+        if var0 == var1:
+            return self
+
+        new_vars = list(range(self.arity))
+        new_vars[var0] = var1
+        new_vars[var1] = var0
+        return self.polymer(new_vars, self.arity)
+
+    def polymer_rotate(self, offset: int) -> 'Relation':
+        if offset % self.arity == 0:
+            return self
+        new_vars = [(i + offset) % self.arity for i in range(self.arity)]
+        return self.polymer(new_vars, self.arity)
+
+    def polymer_insert(self, var: int) -> 'Relation':
+        assert 0 <= var <= self.arity
+        new_vars = [i if i < var else i + 1 for i in range(self.arity)]
+        return self.polymer(new_vars, self.arity + 1)
 
     def fold_any(self, count: Optional[int] = None):
         if count is None:
@@ -166,27 +202,27 @@ class Relation:
     def __repr__(self) -> str:
         return f"Relation({self.size}, {self.arity}, {self.solution().decode()})"
 
-    def comp_eq(self, other: 'Operation') -> BitVec:
+    def comp_eq(self, other: 'Relation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
         return self.table.comp_eq(other.table)
 
-    def comp_ne(self, other: 'Operation') -> BitVec:
+    def comp_ne(self, other: 'Relation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
         return self.table.comp_ne(other.table)
 
-    def comp_le(self, other: 'Operation') -> BitVec:
+    def comp_le(self, other: 'Relation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
         return self.table.comp_le(other.table)
 
-    def comp_lt(self, other: 'Operation') -> BitVec:
+    def comp_lt(self, other: 'Relation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
         return self.table.comp_lt(other.table)
 
-    def comp_ge(self, other: 'Operation') -> BitVec:
+    def comp_ge(self, other: 'Relation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
         return self.table.comp_ge(other.table)
 
-    def comp_gt(self, other: 'Operation') -> BitVec:
+    def comp_gt(self, other: 'Relation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
         return self.table.comp_gt(other.table)
 
@@ -229,6 +265,119 @@ class Relation:
     def transitive(self) -> BitVec:
         assert self.arity == 2
         return (~self.compose(self) | self).table.fold_all()
+
+    def product(self, other: 'Relation') -> 'Relation':
+        assert other.size == self.size
+
+        rel1 = self.polymer(range(self.arity), self.arity + other.arity)
+        rel2 = other.polymer(range(self.arity, self.arity + other.arity),
+                             self.arity + other.arity)
+        return rel1 & rel2
+
+    def evaluate(self, operations: List['Relation']) -> 'Relation':
+        assert len(operations) == self.arity and self.arity >= 1
+        oper_arity = operations[0].arity
+        assert oper_arity >= 1
+        assert all(oper.arity == oper_arity and oper.size == self.size
+                   for oper in operations)
+
+        if oper_arity == 1:
+            return self._evaluate_n1(operations)
+        elif self.arity == 1:
+            return self._evaluate_1m(operations[0])
+        elif oper_arity == 2:
+            return self._evaluate_n2(operations)
+        elif self.arity == 2:
+            return self._evaluate_2m(operations[0], operations[1])
+        elif oper_arity == 3:
+            return self._evaluate_n3(operations)
+        else:
+            raise NotImplementedError()
+
+    def _evaluate_n1(self, opers: List['Relation']) -> 'Relation':
+        assert len(opers) == self.arity and self.arity >= 1
+        assert all(oper.arity == 1 and oper.size == self.size
+                   for oper in opers)
+        rel = opers[0]
+        for oper in opers[1:]:
+            rel = rel.product(oper)
+        return rel
+
+    def _evaluate_1m(self, oper: 'Relation') -> 'Relation':
+        assert self.arity == 1 and oper.arity >= 1
+        oper = oper.polymer_rotate(-1)
+        while oper.arity > 1:
+            oper &= self.polymer([0], oper.arity)
+            oper = oper.fold_any(1)
+        return oper
+
+    def _evaluate_n2(self, opers: List['Relation']) -> 'Relation':
+        assert len(opers) == self.arity and self.arity >= 1
+        assert all(oper.arity == 2 and oper.size == self.size
+                   for oper in opers)
+        rel = self
+        for oper in opers:
+            rel = rel.polymer_insert(0)
+            rel &= oper.polymer([0, 1], rel.arity)
+            rel = rel.polymer_rotate(-1)
+            rel = rel.fold_any(1)
+        return rel
+
+    def _evaluate_2m(self, oper0: 'Relation', oper1: 'Relation') -> 'Relation':
+        assert self.arity == 2 and oper0.arity == oper1.arity
+        assert oper0.size == self.size and oper1.size == self.size
+        rel = self.polymer([0, 1], oper0.arity + 1)
+        test = oper0.polymer_rotate(-1)
+        for _ in range(oper0.arity - 1):
+            test = test.polymer_insert(1)
+            test &= rel
+            test = test.fold_any(1)
+            test = test.polymer_rotate(-1)
+        test = test.polymer_insert(1)
+        test &= oper1.polymer_insert(0)
+        test = test.polymer_rotate(-2)
+        test = test.fold_any(oper0.arity - 1)
+        return test
+
+    def _evaluate_n3(self, opers: List['Relation']) -> 'Relation':
+        assert len(opers) == self.arity and self.arity >= 1
+        assert all(oper.arity == 3 and oper.size == self.size
+                   for oper in opers)
+        rel = self.polymer(range(0, 2 * self.arity, 2), 2 * self.arity)
+        rel &= self.polymer(range(1, 2 * self.arity, 2), 2 * self.arity)
+        for oper in opers:
+            rel = rel.polymer_insert(0)
+            rel &= oper.polymer([0, 1, 2], rel.arity)
+            rel = rel.polymer_rotate(-1)
+            rel = rel.fold_any(2)
+        return rel
+
+    def _evaluate_nm(self, opers: List['Relation']) -> 'Relation':
+        assert len(opers) == self.arity and self.arity >= 1
+        oper_arity = opers[0].arity
+        assert oper_arity >= 1
+        assert all(oper.arity == oper_arity and oper.size == self.size
+                   for oper in opers)
+
+        rel = Relation.new_full(self.size, self.arity * oper_arity)
+        for idx, oper in enumerate(opers):
+            rel &= oper.polymer(range(idx, rel.arity, self.arity), rel.arity)
+
+        for idx in range(self.arity, rel.arity, self.arity):
+            rel &= self.polymer(range(idx, idx + self.arity), rel.arity)
+
+        rel = rel.polymer_rotate(-self.arity)
+        rel = rel.fold_any(self.arity * (oper_arity - 1))
+        assert rel.arity == self.arity
+        return rel
+
+    def closure(self, operation: 'Operation') -> 'Relation':
+        oper = operation.as_relation()
+        return self.evaluate([oper for _ in range(self.arity)])
+
+    def preserves(self, operation: 'Operation') -> BitVec:
+        rel = self.closure(operation)
+        return (~rel | self).table.fold_all()
 
 
 class PartialOp:
@@ -284,7 +433,7 @@ class PartialOp:
             table[index] = Solver.TRUE
         return PartialOp(size, 0, BitVec(Solver.CALC, table))
 
-    def polymer(self, new_vars: List[int], new_arity: Optional[int] = None) -> 'PartialOp':
+    def polymer(self, new_vars: Sequence[int], new_arity: Optional[int] = None) -> 'PartialOp':
         assert len(new_vars) == self.arity
         if new_arity is None:
             new_arity = max(new_vars) + 1
@@ -431,7 +580,7 @@ class Operation:
     def as_partialop(self) -> PartialOp:
         return PartialOp(self.size, self.arity, self.table)
 
-    def polymer(self, new_vars: List[int], new_arity: Optional[int] = None) -> 'Operation':
+    def polymer(self, new_vars: Sequence[int], new_arity: Optional[int] = None) -> 'Operation':
         assert len(new_vars) == self.arity
         if new_arity is None:
             new_arity = max(new_vars) + 1

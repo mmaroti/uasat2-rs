@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import uasat
+from uasat import Solver, Relation, Operation
 
 
 def test_number_of_posets():
@@ -21,8 +21,8 @@ def test_number_of_posets():
     Counting the number of labeled 3-element posets.
     """
 
-    solver = uasat.Solver()
-    rel = uasat.Relation(3, 2, solver)
+    solver = Solver()
+    rel = Relation(3, 2, solver)
     rel.reflexive().ensure_all()
     rel.antisymm().ensure_all()
     rel.transitive().ensure_all()
@@ -37,9 +37,9 @@ def test_number_of_posets():
 
 
 def test_commutative_ops():
-    solver = uasat.Solver()
+    solver = Solver()
 
-    oper = uasat.Operation(2, 2, solver)
+    oper = Operation(2, 2, solver)
     test = oper.comp_eq(oper.polymer([1, 0]))
     solver.add_clause(test.literals)
 
@@ -50,5 +50,105 @@ def test_commutative_ops():
         solver.add_clause((oper.table ^ val.table).literals)
 
 
+def test_evaluate_n1():
+    for arity in range(1, 4):
+        solver = Solver()
+
+        rel = Relation(2, arity, solver)
+        opers = [Relation(2, 1, solver) for _ in range(arity)]
+
+        out0 = rel._evaluate_n1(opers)
+        out1 = rel._evaluate_nm(opers)
+        out0.comp_ne(out1).ensure_all()
+
+        if solver.solve():
+            print(rel.solution())
+            for op in opers:
+                print(op.solution())
+            print(out0.solution())
+            print(out1.solution())
+            assert False
+
+
+def test_evaluate_n2():
+    for arity in range(1, 4):
+        solver = Solver()
+
+        rel = Relation(2, arity, solver)
+        opers = [Relation(2, 2, solver) for _ in range(arity)]
+
+        out0 = rel._evaluate_n2(opers)
+        out1 = rel._evaluate_nm(opers)
+        out0.comp_ne(out1).ensure_all()
+
+        if solver.solve():
+            print(rel.solution())
+            for op in opers:
+                print(op.solution())
+            print(out0.solution())
+            print(out1.solution())
+            assert False
+
+
+def test_evaluate_n3():
+    for arity in range(1, 4):
+        solver = Solver()
+
+        rel = Relation(2, arity, solver)
+        opers = [Relation(2, 3, solver) for _ in range(arity)]
+
+        out0 = rel._evaluate_n3(opers)
+        out1 = rel._evaluate_nm(opers)
+        out0.comp_ne(out1).ensure_all()
+
+        if solver.solve():
+            print(rel.solution())
+            for op in opers:
+                print(op.solution())
+            print(out0.solution())
+            print(out1.solution())
+            assert False
+
+
+def test_evaluate_1m():
+    for arity in range(1, 4):
+        solver = Solver()
+
+        rel = Relation(2, 1, solver)
+        oper = Relation(2, arity, solver)
+
+        out0 = rel._evaluate_1m(oper)
+        out1 = rel._evaluate_nm([oper])
+        out0.comp_ne(out1).ensure_all()
+
+        if solver.solve():
+            print(rel.solution())
+            print(oper.solution())
+            print(out0.solution())
+            print(out1.solution())
+            assert False
+
+
+def test_evaluate_2m():
+    for arity in range(1, 4):
+        solver = Solver()
+
+        rel = Relation(2, 2, solver)
+        oper0 = Relation(2, arity, solver)
+        oper1 = Relation(2, arity, solver)
+
+        out0 = rel._evaluate_2m(oper0, oper1)
+        out1 = rel._evaluate_nm([oper0, oper1])
+        out0.comp_ne(out1).ensure_all()
+
+        if solver.solve():
+            print(rel.solution())
+            print(oper0.solution())
+            print(oper1.solution())
+            print(out0.solution())
+            print(out1.solution())
+            assert False
+
+
 if __name__ == '__main__':
-    test_number_of_posets()
+    test_evaluate_n3()

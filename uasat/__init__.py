@@ -19,7 +19,7 @@ related to universal algebra.
 """
 
 from ._uasat import Solver, BitVec
-from .operation import Operation, PartialOp, Constant
+from .operation import Operation, Constant
 from .relation import Relation
 
 # __doc__ = uasat.__doc__
@@ -30,7 +30,6 @@ __all__ = [
     "Solver",
     "BitVec",
     "Relation",
-    "PartialOp",
     "Operation",
     "Constant",
 ]

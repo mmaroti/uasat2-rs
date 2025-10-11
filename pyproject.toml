@@ -17,7 +17,6 @@ classifiers = [
 ]
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
-dependencies = ["typeguard>=4.1"]
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -27,3 +26,4 @@ tests = ["pytest"]
 module-name = "uasat._uasat"
 features = ["pyo3/extension-module"]
 strip = true
+exclude = ["research"]

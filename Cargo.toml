@@ -5,7 +5,6 @@ authors = ["Miklos Maroti <mmaroti@gmail.com>"]
 edition = "2021"
 readme = "README.md"
 license = "GPL-3.0-or-later"
-license-file = "LICENSE"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]

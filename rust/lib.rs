@@ -23,7 +23,7 @@ pub use bitvec::*;
 
 use pyo3::prelude::*;
 
-/// The uasat module implemented in Rust.
+/// The _uasat helper module implemented in Rust.
 #[pymodule]
 #[pyo3(name = "_uasat")]
 fn uasat(m: &Bound<'_, PyModule>) -> PyResult<()> {

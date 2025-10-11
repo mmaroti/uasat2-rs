@@ -13,24 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-UASAT library making it easy to work with a SAT solver and solve problems
-related to universal algebra.
-"""
+import click
 
-from ._uasat import Solver, BitVec
-from .operation import Operation, PartialOp, Constant
-from .relation import Relation
 
-# __doc__ = uasat.__doc__
-# if hasattr(uasat, "__all__"):
-#     __all__ = uasat.__all__
+@click.group()
+def cli():
+    pass
 
-__all__ = [
-    "Solver",
-    "BitVec",
-    "Relation",
-    "PartialOp",
-    "Operation",
-    "Constant",
-]
+
+@cli.command(context_settings={'show_default': True})
+def test():
+    """
+    Test script for making sure that things works.
+    """
+    print("Hello from UASAT!")

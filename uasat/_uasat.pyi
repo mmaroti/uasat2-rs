@@ -269,7 +269,7 @@ class BitVec(object):
         """
 
     @staticmethod
-    def new_variable(solver: Solver, length: int) -> BitVec:
+    def variable(solver: Solver, length: int) -> BitVec:
         """
         Constructs a new bit vector of length length filled with fresh
         new literals from the solver.

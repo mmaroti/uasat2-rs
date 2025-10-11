@@ -47,7 +47,7 @@ impl PyBitVec {
     /// Constructs a new bit vector of length length filled with fresh
     /// new literals from the solver.
     #[staticmethod]
-    pub fn new_variable(solver: Py<PySolver>, count: u32) -> PyResult<Self> {
+    pub fn variable(solver: Py<PySolver>, count: u32) -> PyResult<Self> {
         if solver.get().__bool__() {
             let var = solver.get().add_variable(count);
             let literals = (var..(var + count as i32)).collect();

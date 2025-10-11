@@ -22,7 +22,7 @@ def test_number_of_posets():
     """
 
     solver = Solver()
-    rel = Relation(3, 2, solver)
+    rel = Relation.variable(3, 2, solver)
     rel.reflexive().ensure_all()
     rel.antisymm().ensure_all()
     rel.transitive().ensure_all()
@@ -39,7 +39,7 @@ def test_number_of_posets():
 def test_commutative_ops():
     solver = Solver()
 
-    oper = Operation(2, 2, solver)
+    oper = Operation.variable(2, 2, solver)
     test = oper.comp_eq(oper.polymer([1, 0]))
     solver.add_clause(test.literals)
 
@@ -54,8 +54,8 @@ def test_evaluate_n1():
     for arity in range(1, 4):
         solver = Solver()
 
-        rel = Relation(2, arity, solver)
-        opers = [Relation(2, 1, solver) for _ in range(arity)]
+        rel = Relation.variable(2, arity, solver)
+        opers = [Relation.variable(2, 1, solver) for _ in range(arity)]
 
         out0 = rel._evaluate_n1(opers)
         out1 = rel._evaluate_nm(opers)
@@ -74,8 +74,8 @@ def test_evaluate_n2():
     for arity in range(1, 4):
         solver = Solver()
 
-        rel = Relation(2, arity, solver)
-        opers = [Relation(2, 2, solver) for _ in range(arity)]
+        rel = Relation.variable(2, arity, solver)
+        opers = [Relation.variable(2, 2, solver) for _ in range(arity)]
 
         out0 = rel._evaluate_n2(opers)
         out1 = rel._evaluate_nm(opers)
@@ -94,8 +94,8 @@ def test_evaluate_n3():
     for arity in range(1, 4):
         solver = Solver()
 
-        rel = Relation(2, arity, solver)
-        opers = [Relation(2, 3, solver) for _ in range(arity)]
+        rel = Relation.variable(2, arity, solver)
+        opers = [Relation.variable(2, 3, solver) for _ in range(arity)]
 
         out0 = rel._evaluate_n3(opers)
         out1 = rel._evaluate_nm(opers)
@@ -114,8 +114,8 @@ def test_evaluate_1m():
     for arity in range(1, 4):
         solver = Solver()
 
-        rel = Relation(2, 1, solver)
-        oper = Relation(2, arity, solver)
+        rel = Relation.variable(2, 1, solver)
+        oper = Relation.variable(2, arity, solver)
 
         out0 = rel._evaluate_1m(oper)
         out1 = rel._evaluate_nm([oper])
@@ -133,9 +133,9 @@ def test_evaluate_2m():
     for arity in range(1, 4):
         solver = Solver()
 
-        rel = Relation(2, 2, solver)
-        oper0 = Relation(2, arity, solver)
-        oper1 = Relation(2, arity, solver)
+        rel = Relation.variable(2, 2, solver)
+        oper0 = Relation.variable(2, arity, solver)
+        oper1 = Relation.variable(2, arity, solver)
 
         out0 = rel._evaluate_2m(oper0, oper1)
         out1 = rel._evaluate_nm([oper0, oper1])

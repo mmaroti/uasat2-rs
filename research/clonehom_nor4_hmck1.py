@@ -162,10 +162,10 @@ class Generator:
         return BitVec(solver, literals)
 
     def add_step(self):
-        sel_arg0 = Constant(len(self.tuples), self.solver)
-        sel_arg1 = Constant(len(self.tuples), self.solver)
-        sel_arg2 = Constant(len(self.tuples), self.solver)
-        sel_arg3 = Constant(len(self.tuples), self.solver)
+        sel_arg0 = Constant.variable(len(self.tuples), self.solver)
+        sel_arg1 = Constant.variable(len(self.tuples), self.solver)
+        sel_arg2 = Constant.variable(len(self.tuples), self.solver)
+        sel_arg3 = Constant.variable(len(self.tuples), self.solver)
 
         arg0 = Generator.choice(sel_arg0, self.tuples)
         arg1 = Generator.choice(sel_arg1, self.tuples)
@@ -175,7 +175,7 @@ class Generator:
         out0 = self.rel.apply(0, [arg0, arg1, arg2, arg3])
         out1 = self.rel.apply(1, [arg0, arg1, arg2, arg3])
 
-        sel_oper = Constant(2, self.solver)
+        sel_oper = Constant.variable(2, self.solver)
         out = Generator.choice(sel_oper, [out0, out1])
         assert len(out) == self.rel.length
 
@@ -413,6 +413,7 @@ def test3():
     ]
 
     find_algebra([steps], 7)
+
 
 if __name__ == '__main__':
     test3()

@@ -27,7 +27,7 @@ class PartialOp:
         if isinstance(table, BitVec):
             assert len(table) == length
         elif isinstance(table, Solver):
-            table = BitVec.new_variable(table, length)
+            table = BitVec.variable(table, length)
             for start in range(0, length, size):
                 table.slice(start, start + size).ensure_amo()
         else:
@@ -59,7 +59,7 @@ class PartialOp:
     def new_proj(size: int, arity: int, coord: int) -> 'PartialOp':
         assert 1 <= size and 0 <= coord < arity
 
-        table = Relation.new_diag(
+        table = Relation.diagonal(
             size, 2).polymer([0, coord + 1], arity + 1)
         return PartialOp(size, arity, table.table)
 
@@ -167,43 +167,12 @@ class PartialOp:
 
 
 class Operation:
-    def __init__(self, size: int, arity: int, table: List[int] | BitVec | Solver):
-        assert size >= 1 and arity >= 0
-        length = size ** (arity + 1)
-
-        if isinstance(table, BitVec):
-            assert len(table) == length
-        elif isinstance(table, Solver):
-            table = BitVec.new_variable(table, length)
-            for start in range(0, length, size):
-                table.slice(start, start + size).ensure_one()
-        else:
-            table2 = [Solver.FALSE for _ in range(length)]
-            assert len(table) == length // size
-            for idx, val in enumerate(table):
-                assert 0 <= val < size
-                table2[idx * size + val] = Solver.TRUE
-            table = BitVec(Solver.CALC, table2)
+    def __init__(self, size: int, arity: int, table: BitVec):
+        assert size >= 1 and arity >= 0 and len(table) == size ** (arity + 1)
 
         self.size = size
         self.arity = arity
         self.table = table
-
-    @staticmethod
-    def new_proj(size: int, arity: int, coord: int) -> 'Operation':
-        assert 1 <= size and 0 <= coord < arity
-
-        table = Relation.new_diag(
-            size, 2).polymer([0, coord + 1], arity + 1)
-        return Operation(size, arity, table.table)
-
-    @staticmethod
-    def new_const(size: int, index: int) -> 'Operation':
-        assert 0 <= index < size
-
-        table = [Solver.FALSE for _ in range(size)]
-        table[index] = Solver.TRUE
-        return Operation(size, 0, BitVec(Solver.CALC, table))
 
     @property
     def length(self):
@@ -213,11 +182,38 @@ class Operation:
     def solver(self):
         return self.table.solver
 
+    @staticmethod
+    def constant(size: int, arity: int, table: List[int]) -> 'Operation':
+        assert size >= 1 and arity >= 0 and len(table) == size ** arity
+
+        table2 = [Solver.FALSE for _ in range(size * len(table))]
+        for idx, val in enumerate(table):
+            assert 0 <= val < size
+            table2[idx * size + val] = Solver.TRUE
+
+        return Operation(size, arity, BitVec(Solver.CALC, table2))
+
+    @staticmethod
+    def variable(size: int, arity: int, solver: Solver) -> 'Operation':
+        assert size >= 1 and arity >= 0
+        length = size ** (arity + 1)
+
+        table = BitVec.variable(solver, length)
+        for start in range(0, length, size):
+            table.slice(start, start + size).ensure_one()
+
+        return Operation(size, arity, table)
+
+    @staticmethod
+    def projection(size: int, arity: int, coord: int) -> 'Operation':
+        assert 1 <= size and 0 <= coord < arity
+
+        table = Relation.diagonal(
+            size, 2).polymer([0, coord + 1], arity + 1)
+        return Operation(size, arity, table.table)
+
     def as_relation(self) -> Relation:
         return Relation(self.size, self.arity + 1, self.table)
-
-    def as_partialop(self) -> PartialOp:
-        return PartialOp(self.size, self.arity, self.table)
 
     def polymer(self, new_vars: Sequence[int], new_arity: Optional[int] = None) -> 'Operation':
         assert len(new_vars) == self.arity
@@ -309,8 +305,29 @@ class Operation:
 
 
 class Constant(Operation):
-    def __init__(self, size: int, table: List[int] | BitVec | Solver):
+    def __init__(self, size: int, table: BitVec):
         super().__init__(size, 0, table)
+
+    @staticmethod
+    def constant(  # pyright: ignore[reportIncompatibleMethodOverride]
+        size: int,
+        index: int,
+    ) -> 'Constant':
+        assert 0 <= index < size
+
+        table = [Solver.FALSE for _ in range(size)]
+        table[index] = Solver.TRUE
+        return Constant(size, BitVec(Solver.CALC, table))
+
+    @staticmethod
+    def variable(  # pyright: ignore[reportIncompatibleMethodOverride]
+            size: int,
+            solver: Solver,
+    ) -> 'Constant':
+        assert size >= 1
+        table = BitVec.variable(solver, size)
+        table.ensure_one()
+        return Constant(size, table)
 
     def solution(self) -> 'Constant':
         return Constant(self.size, self.table.get_value())

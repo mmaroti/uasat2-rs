@@ -20,32 +20,35 @@ from . import operation
 
 
 class Relation:
-    def __init__(self, size: int, arity: int, table: List[bool] | BitVec | Solver):
-        assert size >= 1 and arity >= 0
-        length = size ** arity
-
-        if isinstance(table, BitVec):
-            assert len(table) == length
-        elif isinstance(table, Solver):
-            table = BitVec.new_variable(table, length)
-        else:
-            assert len(table) == length
-            table = BitVec(Solver.CALC, [Solver.bool_lift(b) for b in table])
+    def __init__(self, size: int, arity: int, table: BitVec):
+        assert size >= 1 and arity >= 0 and len(table) == size ** arity
 
         self.size = size
         self.arity = arity
         self.table = table
 
     @property
-    def length(self):
+    def length(self) -> int:
         return len(self.table)
 
     @property
-    def solver(self):
+    def solver(self) -> Solver:
         return self.table.solver
 
     @staticmethod
-    def new_diag(size: int, arity: int = 2) -> 'Relation':
+    def constant(size: int, arity: int, table: List[bool]) -> 'Relation':
+        assert size >= 1 and arity >= 0 and len(table) == size ** arity
+        table2 = BitVec(Solver.CALC, [Solver.bool_lift(b) for b in table])
+        return Relation(size, arity, table2)
+
+    @staticmethod
+    def variable(size: int, arity: int, solver: Solver) -> 'Relation':
+        assert size >= 1 and arity >= 0
+        table = BitVec.variable(solver, size ** arity)
+        return Relation(size, arity, table)
+
+    @staticmethod
+    def diagonal(size: int, arity: int = 2) -> 'Relation':
         assert size >= 1 and arity >= 0
 
         if size <= 1:
@@ -61,23 +64,17 @@ class Relation:
         return Relation(size, arity, BitVec(Solver.CALC, table))
 
     @staticmethod
-    def new_full(size: int, arity: int) -> 'Relation':
-        return Relation.new_const(size, arity, Solver.CALC, Solver.TRUE)
+    def full(size: int, arity: int) -> 'Relation':
+        table = [Solver.TRUE for _ in range(size ** arity)]
+        return Relation(size, arity, BitVec(Solver.CALC, table))
 
     @staticmethod
-    def new_empty(size: int, arity: int) -> 'Relation':
-        return Relation.new_const(size, arity, Solver.CALC, Solver.FALSE)
+    def empty(size: int, arity: int) -> 'Relation':
+        table = [Solver.FALSE for _ in range(size ** arity)]
+        return Relation(size, arity, BitVec(Solver.CALC, table))
 
     @staticmethod
-    def new_const(size: int, arity: int, solver: Solver, value: int) -> 'Relation':
-        assert size >= 1 and arity >= 0
-
-        length = size ** arity
-        table = [value for _ in range(length)]
-        return Relation(size, arity, BitVec(solver, table))
-
-    @staticmethod
-    def new_singleton(size: int, coord: List[int]) -> 'Relation':
+    def singleton(size: int, coord: List[int]) -> 'Relation':
         assert size >= 1
 
         length = size ** len(coord)
@@ -256,7 +253,7 @@ class Relation:
     def antisymm(self) -> BitVec:
         assert self.arity == 2
         rel = self & self.polymer([1, 0])
-        rel = ~rel | Relation.new_diag(self.size, 2)
+        rel = ~rel | Relation.diagonal(self.size, 2)
         return rel.table.fold_all()
 
     def compose(self, other: 'Relation') -> 'Relation':
@@ -360,7 +357,7 @@ class Relation:
         assert all(oper.arity == oper_arity and oper.size == self.size
                    for oper in opers)
 
-        rel = Relation.new_full(self.size, self.arity * oper_arity)
+        rel = Relation.full(self.size, self.arity * oper_arity)
         for idx, oper in enumerate(opers):
             rel &= oper.polymer(range(idx, rel.arity, self.arity), rel.arity)
 

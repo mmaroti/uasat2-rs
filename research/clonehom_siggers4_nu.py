@@ -171,7 +171,7 @@ class Generator:
         sels = []
         args = []
         for _ in range(self.arity):
-            sel = Constant(len(self.tuples), self.solver)
+            sel = Constant.variable(len(self.tuples), self.solver)
             sels.append(sel)
 
             arg = Generator.choice(sel, self.tuples)
@@ -850,17 +850,17 @@ def test_hihi():
     depth = 3
 
     solver = Solver()
-    oper = Operation(size, arity, solver)
+    oper = Operation.variable(size, arity, solver)
 
     for idx in range(arity):
         new_vars = [0] * idx + [1] + [0] * (arity - idx - 1)
         (~oper.polymer(new_vars).table
-            ^ Operation.new_proj(size, 2, 0).table).ensure_all()
+            ^ Operation.projection(size, 2, 0).table).ensure_all()
 
-    rel = Relation.new_singleton(size, [0, 1])
-    rel |= Relation.new_singleton(size, [1, 2])
-    rel |= Relation.new_singleton(size, [1, 0])
-    rel |= Relation.new_singleton(size, [2, 0])
+    rel = Relation.singleton(size, [0, 1])
+    rel |= Relation.singleton(size, [1, 2])
+    rel |= Relation.singleton(size, [1, 0])
+    rel |= Relation.singleton(size, [2, 0])
 
     rels = [rel]
     for _ in range(depth):

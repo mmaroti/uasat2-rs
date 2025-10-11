@@ -173,7 +173,7 @@ class Generator:
         sels = []
         args = []
         for _ in range(self.arity):
-            sel = Constant(len(self.tuples), self.solver)
+            sel = Constant.variable(len(self.tuples), self.solver)
             sels.append(sel)
 
             arg = Generator.choice(sel, self.tuples)

@@ -198,7 +198,7 @@ class Generator:
         print("Steps:")
         steps = []
         for old_step in self.steps:
-            step = [s.solution().decode()[0] for s in old_step]
+            step = [s.solution().decode() for s in old_step]
             steps.append(step)
             print(f"{step},")
         return steps
@@ -841,6 +841,13 @@ ALGS4B = [
         Operation(3, 0, [1]),
         Operation(3, 0, [2]),
     ]),
+    SmallAlg([
+        Operation(3, 4, [0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 2, 1, 2, 2, 0, 0, 0, 0, 1, 0, 1, 2, 1, 2, 2, 0, 2, 0, 2, 1, 2, 1, 2, 2, 0, 1,
+                         1, 1, 1, 1, 1, 1, 2, 0, 1, 0, 2, 1, 2, 1, 0, 2, 0, 1, 1, 2, 0, 2, 1, 2, 2, 2, 2, 0, 0, 1, 0, 0, 1, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
+    ]),
 ]
 
 
@@ -884,7 +891,7 @@ def test2():
     find_algebra(8, (0, 1, 2), 3, [steps])
 
 
-def test_hihi():
+def test3():
     size = 10
     arity = 4
     depth = 3
@@ -919,4 +926,4 @@ def test_hihi():
 
 
 if __name__ == '__main__':
-    test_hihi()
+    test1()

@@ -16,13 +16,16 @@
 from typing import List, Optional, Sequence
 
 from ._uasat import BitVec, Solver
-from . import operation
 
 
 class Relation:
-    def __init__(self, size: int, arity: int, table: BitVec):
-        assert size >= 1 and arity >= 0 and len(table) == size ** arity
+    def __init__(self, size: int, arity: int, table: BitVec | List[bool]):
+        assert size >= 1 and arity >= 0
 
+        if not isinstance(table, BitVec):
+            table = BitVec(Solver.CALC, [Solver.bool_lift(b) for b in table])
+
+        assert len(table) == size ** arity
         self.size = size
         self.arity = arity
         self.table = table
@@ -34,12 +37,6 @@ class Relation:
     @property
     def solver(self) -> Solver:
         return self.table.solver
-
-    @staticmethod
-    def constant(size: int, arity: int, table: List[bool]) -> 'Relation':
-        assert size >= 1 and arity >= 0 and len(table) == size ** arity
-        table2 = BitVec(Solver.CALC, [Solver.bool_lift(b) for b in table])
-        return Relation(size, arity, table2)
 
     @staticmethod
     def variable(size: int, arity: int, solver: Solver) -> 'Relation':
@@ -138,7 +135,7 @@ class Relation:
         new_vars = [i if i < var else i + 1 for i in range(self.arity)]
         return self.polymer(new_vars, self.arity + 1)
 
-    def fold_any(self, count: Optional[int] = None):
+    def fold_any(self, count: Optional[int] = None) -> 'Relation':
         if count is None:
             count = self.arity
         assert 0 <= count <= self.arity
@@ -151,7 +148,7 @@ class Relation:
         table = BitVec(self.solver, table)
         return Relation(self.size, self.arity - count, table)
 
-    def fold_all(self, count: Optional[int] = None):
+    def fold_all(self, count: Optional[int] = None) -> 'Relation':
         if count is None:
             count = self.arity
         assert 0 <= count <= self.arity
@@ -164,7 +161,7 @@ class Relation:
         table = BitVec(self.solver, table)
         return Relation(self.size, self.arity - count, table)
 
-    def fold_one(self, count: Optional[int] = None):
+    def fold_one(self, count: Optional[int] = None) -> 'Relation':
         if count is None:
             count = self.arity
         assert 0 <= count <= self.arity
@@ -177,7 +174,7 @@ class Relation:
         table = BitVec(self.solver, table)
         return Relation(self.size, self.arity - count, table)
 
-    def fold_amo(self, count: Optional[int] = None):
+    def fold_amo(self, count: Optional[int] = None) -> 'Relation':
         if count is None:
             count = self.arity
         assert 0 <= count <= self.arity
@@ -190,8 +187,20 @@ class Relation:
         table = BitVec(self.solver, table)
         return Relation(self.size, self.arity - count, table)
 
+    def ensure_all(self):
+        self.table.ensure_all()
+
+    def ensure_any(self):
+        self.table.ensure_any()
+
+    def ensure_one(self):
+        self.table.ensure_one()
+
+    def ensure_amo(self):
+        self.table.ensure_amo()
+
     def solution(self) -> 'Relation':
-        return Relation(self.size, self.arity, self.table.get_value())
+        return Relation(self.size, self.arity, self.table.solution())
 
     def decode(self) -> List[bool]:
         assert not self.solver
@@ -368,11 +377,3 @@ class Relation:
         rel = rel.fold_any(self.arity * (oper_arity - 1))
         assert rel.arity == self.arity
         return rel
-
-    def closure(self, operation: 'operation.Operation') -> 'Relation':
-        oper = operation.as_relation()
-        return self.evaluate([oper for _ in range(self.arity)])
-
-    def preserves(self, operation: 'operation.Operation') -> BitVec:
-        rel = self.closure(operation)
-        return (~rel | self).table.fold_all()

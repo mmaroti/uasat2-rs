@@ -63,7 +63,7 @@ class SmallAlg(Algebra):
         return Constant.constant(self.size, index).table
 
     def decode_elem(self, elem: BitVec) -> Any:
-        return Operation(self.size, 0, elem.get_value()).decode()[0]
+        return Operation(self.size, 0, elem.solution()).decode()[0]
 
     def solution(self) -> 'SmallAlg':
         return SmallAlg([op.solution() for op in self.partialops])
@@ -236,8 +236,8 @@ def find_algebra(multi_steps: List[List[List[int]]], size: int = 2) -> Optional[
             mask[(1 + size + size**2) * i + (size**3) * j] = Solver.TRUE
     mask = Relation(size, 4, BitVec(Solver.CALC, mask))
 
-    (f1.partop_domain() ^ ~mask).table.ensure_all()
-    (g1.partop_domain() ^ ~mask).table.ensure_all()
+    (f1.domain() ^ ~mask).ensure_all()
+    (g1.domain() ^ ~mask).ensure_all()
 
     f1.polymer([0, 0, 1, 1]).comp_eq(
         g1.polymer([0, 0, 1, 1])).ensure_all()
@@ -275,94 +275,94 @@ def find_algebra(multi_steps: List[List[List[int]]], size: int = 2) -> Optional[
 
 ALGS = [
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 0, None, 1,
-                                         0, None, 0, None, 0, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 0, None, 0,
-                                         1, None, 0, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 0, None, 1,
+                         0, None, 0, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 0, None, 0,
+                         1, None, 0, None, 0, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 0, None,
-                                         1, 0, None, 1, None, 0, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 0, None,
-                                         0, 1, None, 1, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 0, None,
+                         1, 0, None, 1, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 0, None,
+                         0, 1, None, 1, None, 0, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 1, None,
-                                         1, 0, None, 1, None, 1, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 1, None,
-                                         0, 1, None, 1, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 1, None,
+                         1, 0, None, 1, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 1, None,
+                         0, 1, None, 1, None, 1, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 0, None,
-                                         1, 0, None, 1, None, 1, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 0, None,
-                                         0, 1, None, 1, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 0, None,
+                         1, 0, None, 1, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 0, None,
+                         0, 1, None, 1, None, 1, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 1, None,
-                                         1, 0, None, 0, None, 1, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 1, None,
-                                         0, 1, None, 0, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 1, None,
+                         1, 0, None, 0, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 1, None,
+                         0, 1, None, 0, None, 1, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 0, None,
-                                         1, 0, None, 1, None, 1, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 0, None,
-                                         0, 1, None, 1, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 0, None,
+                         1, 0, None, 1, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 0, None,
+                         0, 1, None, 1, None, 1, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 1, None,
-                                         1, 0, None, 1, None, 1, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 1, None,
-                                         0, 1, None, 1, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 1, None,
+                         1, 0, None, 1, None, 1, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 1, None,
+                         0, 1, None, 1, None, 1, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 1, None,
-                                         1, 0, None, 0, None, 0, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 1, None,
-                                         0, 1, None, 0, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 1, None,
+                         1, 0, None, 0, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 1, None,
+                         0, 1, None, 0, None, 0, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 0, None,
-                                         1, 0, None, 0, None, 0, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 0, None,
-                                         0, 1, None, 0, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 0, None,
+                         1, 0, None, 0, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 0, None,
+                         0, 1, None, 0, None, 0, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 1, None,
-                                         1, 0, None, 1, None, 0, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 1, None, 1, None,
-                                         0, 1, None, 1, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 1, None,
+                         1, 0, None, 1, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 1, None, 1, None,
+                         0, 1, None, 1, None, 0, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 1, None,
-                                         1, 0, None, 1, None, 0, None, None, 1]),
-        Operation.partop_constant(2, 4, [0, None, None, 0, None, 1, None,
-                                         0, 1, None, 1, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 1, None,
+                         1, 0, None, 1, None, 0, None, None, 1]),
+        Operation(2, 4, [0, None, None, 0, None, 1, None,
+                         0, 1, None, 1, None, 0, None, None, 1]),
     ]),
     SmallAlg([
-        Operation.partop_constant(3, 4, [0, None, None, None, 1, None, None, None, 0, None, 2, None, None, 1, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 0, None, None, 0, None, None, None, None, None, 0, None, None,
-                                         None, 1, None, None, None, 0, None, None, None, None, None, 0, None, None, 2, 0, None, None, None, None, None, 0, None, None, None, None, None, None, 1, None, None, 2, None, 0, None, None, None, 0, None, None, None, 2]),
-        Operation.partop_constant(3, 4, [0, None, None, None, 1, None, None, None, 0, None, 2, None, None, 0, None, None, None, None, None, None, 0, None, None, None, None, None, 0, 1, None, None, 0, None, None, None, None, None, 0, None, None,
-                                         None, 1, None, None, None, 0, None, None, None, None, None, 0, None, None, 1, 2, None, None, None, None, None, 0, None, None, None, None, None, None, 2, None, None, 2, None, 0, None, None, None, 0, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 1, None, None, None, 0, None, 2, None, None, 1, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 0, None, None, 0, None, None, None, None, None, 0, None, None,
+                         None, 1, None, None, None, 0, None, None, None, None, None, 0, None, None, 2, 0, None, None, None, None, None, 0, None, None, None, None, None, None, 1, None, None, 2, None, 0, None, None, None, 0, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 1, None, None, None, 0, None, 2, None, None, 0, None, None, None, None, None, None, 0, None, None, None, None, None, 0, 1, None, None, 0, None, None, None, None, None, 0, None, None,
+                         None, 1, None, None, None, 0, None, None, None, None, None, 0, None, None, 1, 2, None, None, None, None, None, 0, None, None, None, None, None, None, 2, None, None, 2, None, 0, None, None, None, 0, None, None, None, 2]),
     ]),
     SmallAlg([
-        Operation.partop_constant(3, 4, [0, None, None, None, 0, None, None, None, 0, None, 2, None, None, 1, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 0, None, None, 1, None, None, None, None, None, 1, None, None,
-                                         None, 1, None, None, None, 1, None, None, None, None, None, 1, None, None, 2, 0, None, None, None, None, None, 0, None, None, None, None, None, None, 1, None, None, 0, None, 2, None, None, None, 1, None, None, None, 2]),
-        Operation.partop_constant(3, 4, [0, None, None, None, 0, None, None, None, 0, None, 2, None, None, 0, None, None, None, None, None, None, 0, None, None, None, None, None, 0, 1, None, None, 1, None, None, None, None, None, 1, None, None,
-                                         None, 1, None, None, None, 1, None, None, None, None, None, 1, None, None, 1, 2, None, None, None, None, None, 0, None, None, None, None, None, None, 2, None, None, 0, None, 2, None, None, None, 1, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 0, None, None, None, 0, None, 2, None, None, 1, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 0, None, None, 1, None, None, None, None, None, 1, None, None,
+                         None, 1, None, None, None, 1, None, None, None, None, None, 1, None, None, 2, 0, None, None, None, None, None, 0, None, None, None, None, None, None, 1, None, None, 0, None, 2, None, None, None, 1, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 0, None, None, None, 0, None, 2, None, None, 0, None, None, None, None, None, None, 0, None, None, None, None, None, 0, 1, None, None, 1, None, None, None, None, None, 1, None, None,
+                         None, 1, None, None, None, 1, None, None, None, None, None, 1, None, None, 1, 2, None, None, None, None, None, 0, None, None, None, None, None, None, 2, None, None, 0, None, 2, None, None, None, 1, None, None, None, 2]),
     ]),
     SmallAlg([
-        Operation.partop_constant(3, 4, [0, None, None, None, 2, None, None, None, 1, None, 2, None, None, 1, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 0, None, None, 0, None, None, None, None, None, 1, None, None,
-                                         None, 1, None, None, None, 2, None, None, None, None, None, 0, None, None, 2, 0, None, None, None, None, None, 1, None, None, None, None, None, None, 1, None, None, 2, None, 1, None, None, None, 0, None, None, None, 2]),
-        Operation.partop_constant(3, 4, [0, None, None, None, 2, None, None, None, 1, None, 2, None, None, 0, None, None, None, None, None, None, 0, None, None, None, None, None, 0, 1, None, None, 0, None, None, None, None, None, 1, None, None,
-                                         None, 1, None, None, None, 2, None, None, None, None, None, 0, None, None, 1, 2, None, None, None, None, None, 1, None, None, None, None, None, None, 2, None, None, 2, None, 1, None, None, None, 0, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 2, None, None, None, 1, None, 2, None, None, 1, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 0, None, None, 0, None, None, None, None, None, 1, None, None,
+                         None, 1, None, None, None, 2, None, None, None, None, None, 0, None, None, 2, 0, None, None, None, None, None, 1, None, None, None, None, None, None, 1, None, None, 2, None, 1, None, None, None, 0, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 2, None, None, None, 1, None, 2, None, None, 0, None, None, None, None, None, None, 0, None, None, None, None, None, 0, 1, None, None, 0, None, None, None, None, None, 1, None, None,
+                         None, 1, None, None, None, 2, None, None, None, None, None, 0, None, None, 1, 2, None, None, None, None, None, 1, None, None, None, None, None, None, 2, None, None, 2, None, 1, None, None, None, 0, None, None, None, 2]),
     ]),
     SmallAlg([
-        Operation.partop_constant(3, 4, [0, None, None, None, 1, None, None, None, 0, None, 0, None, None, 1, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 0, None, None, 2, None, None, None, None, None, 1, None, None,
-                                         None, 1, None, None, None, 0, None, None, None, None, None, 0, None, None, 2, 0, None, None, None, None, None, 0, None, None, None, None, None, None, 1, None, None, 1, None, 0, None, None, None, 0, None, None, None, 2]),
-        Operation.partop_constant(3, 4, [0, None, None, None, 1, None, None, None, 0, None, 0, None, None, 0, None, None, None, None, None, None, 0, None, None, None, None, None, 0, 1, None, None, 2, None, None, None, None, None, 1, None, None,
-                                         None, 1, None, None, None, 0, None, None, None, None, None, 0, None, None, 1, 2, None, None, None, None, None, 0, None, None, None, None, None, None, 2, None, None, 1, None, 0, None, None, None, 0, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 1, None, None, None, 0, None, 0, None, None, 1, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 0, None, None, 2, None, None, None, None, None, 1, None, None,
+                         None, 1, None, None, None, 0, None, None, None, None, None, 0, None, None, 2, 0, None, None, None, None, None, 0, None, None, None, None, None, None, 1, None, None, 1, None, 0, None, None, None, 0, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 1, None, None, None, 0, None, 0, None, None, 0, None, None, None, None, None, None, 0, None, None, None, None, None, 0, 1, None, None, 2, None, None, None, None, None, 1, None, None,
+                         None, 1, None, None, None, 0, None, None, None, None, None, 0, None, None, 1, 2, None, None, None, None, None, 0, None, None, None, None, None, None, 2, None, None, 1, None, 0, None, None, None, 0, None, None, None, 2]),
     ]),
 ]
 

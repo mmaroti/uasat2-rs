@@ -20,9 +20,18 @@ from .relation import Relation
 
 
 class Operation:
-    def __init__(self, size: int, arity: int, table: BitVec):
-        assert size >= 1 and arity >= 0 and len(table) == size ** (arity + 1)
+    def __init__(self, size: int, arity: int, table: BitVec | List[Optional[int]]):
+        assert size >= 1 and arity >= 0
 
+        if not isinstance(table, BitVec):
+            table2 = [Solver.FALSE for _ in range(size * len(table))]
+            for idx, val in enumerate(table):
+                if val is not None:
+                    assert 0 <= val < size
+                    table2[idx * size + val] = Solver.TRUE
+            table = BitVec(Solver.CALC, table2)
+
+        assert len(table) == size ** (arity + 1)
         self.size = size
         self.arity = arity
         self.table = table
@@ -34,17 +43,6 @@ class Operation:
     @property
     def solver(self):
         return self.table.solver
-
-    @staticmethod
-    def constant(size: int, arity: int, table: List[int]) -> 'Operation':
-        assert size >= 1 and arity >= 0 and len(table) == size ** arity
-
-        table2 = [Solver.FALSE for _ in range(size * len(table))]
-        for idx, val in enumerate(table):
-            assert 0 <= val < size
-            table2[idx * size + val] = Solver.TRUE
-
-        return Operation(size, arity, BitVec(Solver.CALC, table2))
 
     @staticmethod
     def variable(size: int, arity: int, solver: Solver) -> 'Operation':
@@ -99,9 +97,9 @@ class Operation:
         return Operation(self.size, new_arity, table)
 
     def solution(self) -> 'Operation':
-        return Operation(self.size, self.arity, self.table.get_value())
+        return Operation(self.size, self.arity, self.table.solution())
 
-    def decode(self) -> List[int]:
+    def decode(self) -> List[Optional[int]]:
         assert not self.table.solver
 
         result = []
@@ -110,6 +108,10 @@ class Operation:
                 if self.table[start + i] == Solver.TRUE:
                     result.append(i)
                     break
+            else:
+                result.append(None)
+
+        assert len(result) == self.size ** self.arity
         return result
 
     def __repr__(self) -> str:
@@ -129,8 +131,15 @@ class Operation:
                 [idx] + list(range(self.arity + 1, total)),
                 total)
         rel = rel.fold_any(self.arity)
-        rel.fold_one(1).table.ensure_all()
+        rel.fold_one(1).ensure_all()
         return Operation(self.size, new_arity, rel.table)
+
+    def apply(self, rel: Relation) -> Relation:
+        oper = self.as_relation()
+        return rel.evaluate([oper for _ in range(rel.arity)])
+
+    def preserves(self, rel: Relation) -> BitVec:
+        return (~self.apply(rel) | rel).table.fold_all()
 
     def comp_eq(self, other: 'Operation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
@@ -157,18 +166,6 @@ class Operation:
         return self.table.comp_gt(other.table)
 
     @staticmethod
-    def partop_constant(size: int, arity: int, table: List[Optional[int]]) -> 'Operation':
-        assert size >= 1 and arity >= 0 and len(table) == size ** arity
-
-        table2 = [Solver.FALSE for _ in range(size * len(table))]
-        for idx, val in enumerate(table):
-            if val is not None:
-                assert 0 <= val < size
-                table2[idx * size + val] = Solver.TRUE
-
-        return Operation(size, arity, BitVec(Solver.CALC, table2))
-
-    @staticmethod
     def partop_variable(size: int, arity: int, solver: Solver) -> 'Operation':
         assert size >= 1 and arity >= 0
         length = size ** (arity + 1)
@@ -179,23 +176,27 @@ class Operation:
 
         return Operation(size, arity, table)
 
-    def partop_domain(self) -> Relation:
+    def domain(self) -> Relation:
         return self.as_relation().fold_any(1)
 
 
 class Constant(Operation):
-    def __init__(self, size: int, table: BitVec):
-        super().__init__(size, 0, table)
+    def __init__(self, size: int, table: BitVec | int):
+        if isinstance(table, BitVec):
+            super().__init__(size, 0, table)
+        else:
+            super().__init__(size, 0, [table])
 
     @staticmethod
     def constant(  # pyright: ignore[reportIncompatibleMethodOverride]
         size: int,
-        index: int,
+        index: Optional[int],
     ) -> 'Constant':
-        assert 0 <= index < size
+        assert index is None or 0 <= index < size
 
         table = [Solver.FALSE for _ in range(size)]
-        table[index] = Solver.TRUE
+        if index is not None:
+            table[index] = Solver.TRUE
         return Constant(size, BitVec(Solver.CALC, table))
 
     @staticmethod
@@ -209,7 +210,16 @@ class Constant(Operation):
         return Constant(size, table)
 
     def solution(self) -> 'Constant':
-        return Constant(self.size, self.table.get_value())
+        return Constant(self.size, self.table.solution())
+
+    def decode(  # pyright: ignore[reportIncompatibleMethodOverride]
+            self) -> Optional[int]:
+        assert not self.table.solver
+
+        for i in range(self.size):
+            if self.table[i] == Solver.TRUE:
+                return i
+        return None
 
     def __repr__(self) -> str:
         return f"Constant({self.size}, {self.solution().decode()})"

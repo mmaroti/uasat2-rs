@@ -116,7 +116,7 @@ impl PyBitVec {
 
     /// When this bit vector is backed by a solver and there exists a solution,
     /// then this method returns the value of these literals in the solution.
-    pub fn get_value(me: &Bound<'_, Self>) -> PyResult<Py<Self>> {
+    pub fn solution(me: &Bound<'_, Self>) -> PyResult<Py<Self>> {
         if !me.get().solver.get().__bool__() {
             Ok(me.clone().unbind())
         } else if me.get().solver.get().status() != Some(true) {

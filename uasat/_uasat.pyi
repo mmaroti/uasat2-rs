@@ -310,7 +310,7 @@ class BitVec(object):
         Returns the list of literals as a string.
         """
 
-    def get_value(self) -> BitVec:
+    def solution(self) -> BitVec:
         """
         When this bit vector is backed by a solver and there exists a solution,
         then this method returns the value of these literals in the solution.

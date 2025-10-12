@@ -63,7 +63,7 @@ class SmallAlg(Algebra):
         return Constant.constant(self.size, index).table
 
     def decode_elem(self, elem: BitVec) -> Any:
-        return Operation(self.size, 0, elem.get_value()).decode()[0]
+        return Operation(self.size, 0, elem.solution()).decode()[0]
 
     def solution(self) -> 'SmallAlg':
         return SmallAlg([op.solution() for op in self.operations])
@@ -257,589 +257,589 @@ def find_algebra(size: int, gens: Tuple[int, int, int], arity: int, multi_steps:
 
 ALGS4 = [
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 1, 0, 1, 1, 2, 2, 2, 0, 2, 2, 2, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 2, 0, 0, 1,
-                                  0, 1, 1, 1, 1, 1, 2, 0, 1, 2, 1, 1, 0, 0, 1, 2, 0, 2, 1, 1, 1, 0, 2, 1, 2, 0, 1, 1, 1, 1, 1, 0, 1, 2, 1, 2, 2, 1, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 1, 0, 1, 1, 2, 2, 2, 0, 2, 2, 2, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 2, 0, 0, 1,
+                         0, 1, 1, 1, 1, 1, 2, 0, 1, 2, 1, 1, 0, 0, 1, 2, 0, 2, 1, 1, 1, 0, 2, 1, 2, 0, 1, 1, 1, 1, 1, 0, 1, 2, 1, 2, 2, 1, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 2, 0, 2, 1, 0, 1, 2, 2, 0, 2, 0, 2, 2, 2, 1, 1, 0, 1, 2, 1, 1,
-                                  2, 1, 1, 1, 0, 1, 0, 1, 1, 2, 1, 1, 1, 2, 1, 2, 0, 1, 2, 0, 2, 0, 2, 2, 2, 1, 2, 2, 1, 1, 1, 0, 0, 2, 1, 1, 2, 0, 2, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 2, 0, 2, 1, 0, 1, 2, 2, 0, 2, 0, 2, 2, 2, 1, 1, 0, 1, 2, 1, 1,
+                         2, 1, 1, 1, 0, 1, 0, 1, 1, 2, 1, 1, 1, 2, 1, 2, 0, 1, 2, 0, 2, 0, 2, 2, 2, 1, 2, 2, 1, 1, 1, 0, 0, 2, 1, 1, 2, 0, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 2, 2, 1, 2, 0, 2, 2, 0, 0, 0, 1, 0, 2, 2, 1, 2, 0, 2, 1, 1, 1, 1, 2, 1, 0, 1, 1,
-                                  2, 1, 1, 1, 0, 1, 0, 0, 2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 0, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 2, 2, 1, 2, 0, 2, 2, 0, 0, 0, 1, 0, 2, 2, 1, 2, 0, 2, 1, 1, 1, 1, 2, 1, 0, 1, 1,
+                         2, 1, 1, 1, 0, 1, 0, 0, 2, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 0, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 2, 0, 0, 1, 0, 0, 2, 0, 1, 0, 0, 1, 0, 0, 2, 0, 0, 0, 2, 0, 1, 2, 0, 2, 1, 2, 1, 1, 1, 1, 2, 2, 1,
-                                  0, 1, 1, 1, 1, 1, 1, 0, 2, 1, 2, 1, 1, 1, 2, 2, 0, 1, 2, 2, 1, 0, 1, 0, 2, 0, 1, 1, 0, 1, 2, 2, 0, 2, 0, 0, 2, 2, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 2, 0, 0, 1, 0, 0, 2, 0, 1, 0, 0, 1, 0, 0, 2, 0, 0, 0, 2, 0, 1, 2, 0, 2, 1, 2, 1, 1, 1, 1, 2, 2, 1,
+                         0, 1, 1, 1, 1, 1, 1, 0, 2, 1, 2, 1, 1, 1, 2, 2, 0, 1, 2, 2, 1, 0, 1, 0, 2, 0, 1, 1, 0, 1, 2, 2, 0, 2, 0, 0, 2, 2, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 1, 0, 2, 2, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 2, 1, 2, 2, 2, 2, 2, 0, 0, 2, 2, 1, 0, 2, 1, 1, 0, 1,
-                                  0, 1, 1, 1, 2, 1, 0, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 0, 2, 0, 2, 0, 0, 1, 2, 2, 0, 1, 0, 1, 2, 2, 1, 2, 1, 0, 2, 2, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 1, 0, 2, 2, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 2, 1, 2, 2, 2, 2, 2, 0, 0, 2, 2, 1, 0, 2, 1, 1, 0, 1,
+                         0, 1, 1, 1, 2, 1, 0, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 0, 2, 0, 2, 0, 0, 1, 2, 2, 0, 1, 0, 1, 2, 2, 1, 2, 1, 0, 2, 2, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 2, 1, 1, 2, 2, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 2, 0, 1, 2, 2, 1, 0, 1, 2, 1, 2, 1,
-                                  2, 1, 1, 1, 2, 1, 1, 2, 0, 0, 1, 1, 1, 1, 1, 2, 0, 0, 0, 1, 0, 1, 2, 0, 2, 1, 2, 2, 2, 1, 2, 0, 2, 2, 0, 1, 2, 0, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 2, 1, 1, 2, 2, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 2, 0, 1, 2, 2, 1, 0, 1, 2, 1, 2, 1,
+                         2, 1, 1, 1, 2, 1, 1, 2, 0, 0, 1, 1, 1, 1, 1, 2, 0, 0, 0, 1, 0, 1, 2, 0, 2, 1, 2, 2, 2, 1, 2, 0, 2, 2, 0, 1, 2, 0, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 2, 0, 1, 2, 0, 0, 0, 2, 1, 1, 2, 2, 2, 0, 0, 1, 1, 1, 1, 0, 2, 2, 0, 0, 0, 1, 1, 1, 2, 2, 1, 0, 1,
-                                  2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 2, 1, 2, 2, 0, 0, 1, 1, 1, 2, 2, 2, 2, 1, 2, 0, 1, 1, 2, 2, 0, 2, 2, 0, 2, 1, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 2, 0, 1, 2, 0, 0, 0, 2, 1, 1, 2, 2, 2, 0, 0, 1, 1, 1, 1, 0, 2, 2, 0, 0, 0, 1, 1, 1, 2, 2, 1, 0, 1,
+                         2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 2, 1, 2, 2, 0, 0, 1, 1, 1, 2, 2, 2, 2, 1, 2, 0, 1, 1, 2, 2, 0, 2, 2, 0, 2, 1, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 2, 2, 1, 1, 0, 1, 1, 0, 0, 2, 2, 2, 2, 0, 0, 2, 0, 0, 2, 0, 1, 0, 2, 0, 2, 2, 1,
-                                  2, 1, 1, 1, 2, 1, 0, 0, 1, 1, 2, 1, 2, 0, 2, 2, 0, 2, 0, 2, 1, 1, 1, 1, 2, 1, 0, 1, 1, 1, 1, 0, 0, 2, 0, 1, 2, 0, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 2, 2, 2, 1, 1, 0, 1, 1, 0, 0, 2, 2, 2, 2, 0, 0, 2, 0, 0, 2, 0, 1, 0, 2, 0, 2, 2, 1,
+                         2, 1, 1, 1, 2, 1, 0, 0, 1, 1, 2, 1, 2, 0, 2, 2, 0, 2, 0, 2, 1, 1, 1, 1, 2, 1, 0, 1, 1, 1, 1, 0, 0, 2, 0, 1, 2, 0, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 2, 0, 2, 2, 1, 1, 0, 0, 0, 1, 1, 1,
-                                  2, 1, 1, 1, 1, 1, 0, 1, 0, 2, 2, 1, 1, 2, 0, 2, 0, 2, 1, 2, 1, 0, 1, 0, 2, 0, 0, 1, 1, 1, 1, 2, 2, 2, 0, 0, 2, 1, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 2, 0, 2, 2, 1, 1, 0, 0, 0, 1, 1, 1,
+                         2, 1, 1, 1, 1, 1, 0, 1, 0, 2, 2, 1, 1, 2, 0, 2, 0, 2, 1, 2, 1, 0, 1, 0, 2, 0, 0, 1, 1, 1, 1, 2, 2, 2, 0, 0, 2, 1, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 1, 2, 0, 0, 2, 0, 2, 1, 1, 1, 1, 0, 0, 2, 0, 1, 0, 0, 1, 2, 0, 1, 2, 0, 2, 0, 2, 1, 2, 0, 2, 0, 1, 1,
-                                  2, 1, 1, 1, 2, 1, 2, 1, 0, 2, 0, 1, 1, 2, 2, 2, 0, 1, 0, 1, 0, 1, 1, 0, 2, 0, 1, 0, 2, 1, 1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 1, 2, 0, 0, 2, 0, 2, 1, 1, 1, 1, 0, 0, 2, 0, 1, 0, 0, 1, 2, 0, 1, 2, 0, 2, 0, 2, 1, 2, 0, 2, 0, 1, 1,
+                         2, 1, 1, 1, 2, 1, 2, 1, 0, 2, 0, 1, 1, 2, 2, 2, 0, 1, 0, 1, 0, 1, 1, 0, 2, 0, 1, 0, 2, 1, 1, 2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 0, 2, 0, 1, 2, 0, 0, 0, 0, 1, 1, 2, 2, 1, 0, 0, 0, 2, 1, 0, 0, 2, 2, 0, 2, 2, 2, 1, 2, 1, 0, 2, 0, 1,
-                                  1, 1, 1, 1, 0, 1, 1, 2, 0, 2, 0, 1, 0, 1, 1, 2, 0, 1, 0, 2, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 0, 1, 1, 2, 2, 0, 2, 1, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 0, 2, 0, 1, 2, 0, 0, 0, 0, 1, 1, 2, 2, 1, 0, 0, 0, 2, 1, 0, 0, 2, 2, 0, 2, 2, 2, 1, 2, 1, 0, 2, 0, 1,
+                         1, 1, 1, 1, 0, 1, 1, 2, 0, 2, 0, 1, 0, 1, 1, 2, 0, 1, 0, 2, 2, 1, 1, 1, 2, 2, 1, 1, 2, 1, 0, 1, 1, 2, 2, 0, 2, 1, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 1, 2, 0, 2, 0, 0, 2, 0, 2, 1, 2, 1, 2, 0, 0, 2, 0, 0, 1, 1, 2, 1, 2, 0, 0, 2, 1, 1, 2, 0, 0, 0, 2, 1,
-                                  2, 1, 1, 1, 2, 1, 0, 2, 1, 1, 1, 1, 1, 0, 1, 2, 0, 2, 2, 2, 0, 1, 1, 2, 2, 0, 0, 1, 0, 1, 1, 1, 2, 2, 1, 0, 2, 1, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 1, 2, 0, 2, 0, 0, 2, 0, 2, 1, 2, 1, 2, 0, 0, 2, 0, 0, 1, 1, 2, 1, 2, 0, 0, 2, 1, 1, 2, 0, 0, 0, 2, 1,
+                         2, 1, 1, 1, 2, 1, 0, 2, 1, 1, 1, 1, 1, 0, 1, 2, 0, 2, 2, 2, 0, 1, 1, 2, 2, 0, 0, 1, 0, 1, 1, 1, 2, 2, 1, 0, 2, 1, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 2, 0, 2, 1, 0, 1, 0, 1, 1, 1, 2, 0, 2, 0, 2, 1, 2, 2, 0, 0, 0, 2, 0, 2, 1, 2, 1, 2, 0, 1, 0, 2, 1,
-                                  0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 0, 2, 2, 2, 2, 0, 0, 2, 2, 0, 0, 1, 1, 1, 0, 0, 1, 2, 0, 0, 2, 1, 2, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 2, 0, 2, 1, 0, 1, 0, 1, 1, 1, 2, 0, 2, 0, 2, 1, 2, 2, 0, 0, 0, 2, 0, 2, 1, 2, 1, 2, 0, 1, 0, 2, 1,
+                         0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 0, 2, 2, 2, 2, 0, 0, 2, 2, 0, 0, 1, 1, 1, 0, 0, 1, 2, 0, 0, 2, 1, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 2, 2, 1, 0, 0, 0, 1, 0, 0, 1, 2, 1, 2, 1, 0, 2, 0, 0, 1, 0, 1, 1, 1, 2, 1, 2, 1,
-                                  0, 1, 1, 1, 2, 1, 2, 2, 1, 0, 1, 1, 0, 2, 0, 2, 0, 2, 0, 0, 1, 1, 2, 2, 2, 0, 2, 2, 2, 1, 1, 0, 0, 2, 0, 2, 2, 0, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 2, 2, 1, 0, 0, 0, 1, 0, 0, 1, 2, 1, 2, 1, 0, 2, 0, 0, 1, 0, 1, 1, 1, 2, 1, 2, 1,
+                         0, 1, 1, 1, 2, 1, 2, 2, 1, 0, 1, 1, 0, 2, 0, 2, 0, 2, 0, 0, 1, 1, 2, 2, 2, 0, 2, 2, 2, 1, 1, 0, 0, 2, 0, 2, 2, 0, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 1, 1, 0, 0, 2, 0, 2, 2, 0, 1, 2, 1, 0, 1, 0, 2, 2, 1, 2, 0, 2, 1, 2, 0, 0, 2, 2, 1, 1, 2, 2, 2, 0, 1,
-                                  2, 1, 1, 1, 2, 1, 2, 0, 1, 1, 1, 1, 0, 1, 1, 2, 0, 2, 1, 2, 2, 0, 1, 1, 2, 0, 1, 0, 1, 1, 0, 0, 0, 2, 2, 0, 2, 1, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 1, 1, 0, 0, 2, 0, 2, 2, 0, 1, 2, 1, 0, 1, 0, 2, 2, 1, 2, 0, 2, 1, 2, 0, 0, 2, 2, 1, 1, 2, 2, 2, 0, 1,
+                         2, 1, 1, 1, 2, 1, 2, 0, 1, 1, 1, 1, 0, 1, 1, 2, 0, 2, 1, 2, 2, 0, 1, 1, 2, 0, 1, 0, 1, 1, 0, 0, 0, 2, 2, 0, 2, 1, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 1, 0, 0, 2, 2, 0, 2, 1, 1, 1, 2, 2, 2, 1, 0, 0, 2, 0, 2, 2, 1, 1, 2, 0, 2, 1, 0, 1, 1, 0, 2, 2, 1, 1,
-                                  1, 1, 1, 1, 2, 1, 2, 0, 2, 1, 2, 1, 0, 1, 2, 2, 0, 0, 0, 2, 2, 2, 0, 0, 2, 0, 2, 0, 1, 1, 0, 1, 1, 2, 1, 0, 2, 0, 2, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 1, 0, 0, 2, 2, 0, 2, 1, 1, 1, 2, 2, 2, 1, 0, 0, 2, 0, 2, 2, 1, 1, 2, 0, 2, 1, 0, 1, 1, 0, 2, 2, 1, 1,
+                         1, 1, 1, 1, 2, 1, 2, 0, 2, 1, 2, 1, 0, 1, 2, 2, 0, 0, 0, 2, 2, 2, 0, 0, 2, 0, 2, 0, 1, 1, 0, 1, 1, 2, 1, 0, 2, 0, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
 ]
 
 
 ALGS4B = [
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [0]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(
+        Operation(
             2, 4, [0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [0]),
-        Operation.constant(2, 0, [1]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [0]),
+        Operation(2, 0, [1]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 2, 0, 0, 0, 1, 1, 0, 0, 0, 2, 0, 1, 2, 1, 1, 0, 1, 1, 0, 1, 1,
-                                  1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 2, 1, 2, 0, 0, 2, 2, 1, 2, 2, 0, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 2, 0, 0, 0, 1, 1, 0, 0, 0, 2, 0, 1, 2, 1, 1, 0, 1, 1, 0, 1, 1,
+                         1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 2, 1, 2, 0, 0, 2, 2, 1, 2, 2, 0, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 2, 0, 1, 2, 0, 1, 2, 1, 1, 2, 0, 0, 2, 0, 1, 2, 2, 0, 0, 2, 1, 2, 0, 0, 2, 0, 1, 2, 2, 0, 0, 0, 1,
-                                  1, 1, 1, 1, 0, 1, 0, 1, 2, 0, 0, 1, 2, 1, 2, 2, 0, 0, 2, 0, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 0, 1, 2, 1, 1, 2, 2, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 2, 0, 1, 2, 0, 1, 2, 1, 1, 2, 0, 0, 2, 0, 1, 2, 2, 0, 0, 2, 1, 2, 0, 0, 2, 0, 1, 2, 2, 0, 0, 0, 1,
+                         1, 1, 1, 1, 0, 1, 0, 1, 2, 0, 0, 1, 2, 1, 2, 2, 0, 0, 2, 0, 2, 1, 0, 1, 2, 1, 1, 1, 1, 1, 1, 0, 1, 2, 1, 1, 2, 2, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 1, 1, 0, 2, 1, 0, 0, 2, 1, 1, 2, 1, 2, 2, 0, 0, 2, 1, 0, 1, 2, 0, 2, 0, 2, 2, 1, 1, 1, 2, 0, 1, 2, 1,
-                                  0, 1, 1, 1, 2, 1, 2, 2, 0, 0, 1, 1, 1, 1, 1, 2, 0, 1, 2, 0, 1, 0, 2, 1, 2, 2, 0, 2, 0, 1, 0, 0, 0, 2, 2, 0, 2, 0, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 1, 1, 0, 2, 1, 0, 0, 2, 1, 1, 2, 1, 2, 2, 0, 0, 2, 1, 0, 1, 2, 0, 2, 0, 2, 2, 1, 1, 1, 2, 0, 1, 2, 1,
+                         0, 1, 1, 1, 2, 1, 2, 2, 0, 0, 1, 1, 1, 1, 1, 2, 0, 1, 2, 0, 1, 0, 2, 1, 2, 2, 0, 2, 0, 1, 0, 0, 0, 2, 2, 0, 2, 0, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 0, 2, 1, 2, 0, 2, 2, 0, 0, 2, 0, 2, 1, 1, 2, 2, 0, 1, 0, 2, 1, 0, 1, 1, 0, 2, 1,
-                                  1, 1, 1, 1, 0, 1, 0, 2, 1, 2, 2, 1, 0, 0, 0, 2, 0, 1, 0, 0, 2, 2, 1, 0, 2, 2, 0, 1, 1, 1, 2, 0, 2, 2, 0, 1, 2, 0, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 0, 2, 1, 2, 0, 2, 2, 0, 0, 2, 0, 2, 1, 1, 2, 2, 0, 1, 0, 2, 1, 0, 1, 1, 0, 2, 1,
+                         1, 1, 1, 1, 0, 1, 0, 2, 1, 2, 2, 1, 0, 0, 0, 2, 0, 1, 0, 0, 2, 2, 1, 0, 2, 2, 0, 1, 1, 1, 2, 0, 2, 2, 0, 1, 2, 0, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 1, 0, 2, 1, 0, 2, 2, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 2, 0, 1, 2, 0, 1, 0, 2, 1, 1, 0, 1,
-                                  0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 2, 1, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 0, 1, 2, 2, 1, 2, 2, 1, 2, 0, 0, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 1, 0, 2, 1, 0, 2, 2, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 2, 0, 1, 2, 0, 1, 0, 2, 1, 1, 0, 1,
+                         0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 2, 1, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 0, 1, 2, 2, 1, 2, 2, 1, 2, 0, 0, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 2, 2, 2, 1, 2, 0, 0, 1, 0, 2, 1, 1, 2, 2, 0, 1, 2, 0, 1, 1, 2, 1, 2, 2, 1, 0, 1, 1,
-                                  2, 1, 1, 1, 2, 1, 0, 1, 2, 0, 1, 1, 0, 0, 0, 2, 0, 0, 2, 0, 0, 1, 2, 2, 2, 1, 0, 0, 2, 1, 2, 1, 0, 2, 1, 0, 2, 1, 2, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 2, 2, 2, 1, 2, 0, 0, 1, 0, 2, 1, 1, 2, 2, 0, 1, 2, 0, 1, 1, 2, 1, 2, 2, 1, 0, 1, 1,
+                         2, 1, 1, 1, 2, 1, 0, 1, 2, 0, 1, 1, 0, 0, 0, 2, 0, 0, 2, 0, 0, 1, 2, 2, 2, 1, 0, 0, 2, 1, 2, 1, 0, 2, 1, 0, 2, 1, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 1, 2, 0, 2, 0, 0, 0, 0, 1, 1, 1, 1, 0, 2, 0, 2, 0, 2, 2, 0, 0, 1, 2, 0, 0, 0, 2, 1, 2, 0, 2, 2, 0, 1,
-                                  2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 2, 0, 0, 1, 1, 1, 1, 1, 0, 2, 2, 0, 0, 2, 1, 0, 0, 1, 2, 1, 2, 2, 0, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 1, 2, 0, 2, 0, 0, 0, 0, 1, 1, 1, 1, 0, 2, 0, 2, 0, 2, 2, 0, 0, 1, 2, 0, 0, 0, 2, 1, 2, 0, 2, 2, 0, 1,
+                         2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 2, 0, 0, 1, 1, 1, 1, 1, 0, 2, 2, 0, 0, 2, 1, 0, 0, 1, 2, 1, 2, 2, 0, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 0, 1, 0, 1, 2, 0, 2, 1, 2, 1, 1, 2, 2, 1, 0, 1, 0, 1, 2, 0, 1, 0, 2, 0, 2, 0, 1, 1, 2, 0, 1, 2, 0, 1,
-                                  0, 1, 1, 1, 2, 1, 2, 2, 0, 0, 1, 1, 0, 2, 0, 2, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0, 2, 2, 1, 1, 0, 2, 1, 2, 1, 0, 2, 0, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 0, 1, 0, 1, 2, 0, 2, 1, 2, 1, 1, 2, 2, 1, 0, 1, 0, 1, 2, 0, 1, 0, 2, 0, 2, 0, 1, 1, 2, 0, 1, 2, 0, 1,
+                         0, 1, 1, 1, 2, 1, 2, 2, 0, 0, 1, 1, 0, 2, 0, 2, 0, 2, 1, 0, 2, 2, 0, 1, 2, 0, 2, 2, 1, 1, 0, 2, 1, 2, 1, 0, 2, 0, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 2, 2, 1, 0, 1, 0, 2, 0, 0, 1, 2, 2, 0, 0, 1, 1, 1, 2, 2, 1, 1, 1, 1,
-                                  2, 1, 1, 1, 1, 1, 0, 2, 0, 2, 2, 1, 1, 1, 2, 2, 0, 1, 1, 0, 0, 1, 2, 1, 2, 2, 1, 2, 2, 1, 0, 0, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 2, 2, 1, 0, 1, 0, 2, 0, 0, 1, 2, 2, 0, 0, 1, 1, 1, 2, 2, 1, 1, 1, 1,
+                         2, 1, 1, 1, 1, 1, 0, 2, 0, 2, 2, 1, 1, 1, 2, 2, 0, 1, 1, 0, 0, 1, 2, 1, 2, 2, 1, 2, 2, 1, 0, 0, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 1, 2, 2, 1, 0, 2, 2, 0, 0, 1, 2, 0, 1, 2, 1, 0, 2, 0, 1, 1, 2, 1, 0, 2, 2, 2, 1, 1,
-                                  0, 1, 1, 1, 2, 1, 0, 1, 2, 0, 2, 1, 2, 1, 2, 2, 0, 0, 0, 1, 0, 0, 1, 2, 2, 0, 1, 0, 2, 1, 0, 2, 0, 2, 1, 2, 2, 0, 2, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 1, 2, 2, 1, 0, 2, 2, 0, 0, 1, 2, 0, 1, 2, 1, 0, 2, 0, 1, 1, 2, 1, 0, 2, 2, 2, 1, 1,
+                         0, 1, 1, 1, 2, 1, 0, 1, 2, 0, 2, 1, 2, 1, 2, 2, 0, 0, 0, 1, 0, 0, 1, 2, 2, 0, 1, 0, 2, 1, 0, 2, 0, 2, 1, 2, 2, 0, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 0, 0, 1, 2, 0, 2, 0, 2, 1, 2, 0, 1, 1, 0, 0, 1, 2, 0, 1, 2, 0, 2, 0, 1, 0, 2, 1, 1, 2, 0, 2, 1, 1,
-                                  1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 2, 0, 0, 2, 1, 2, 1, 0, 1, 2, 1, 1, 1, 0, 1, 1, 2, 2, 2, 0, 0, 2, 2, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 0, 0, 1, 2, 0, 2, 0, 2, 1, 2, 0, 1, 1, 0, 0, 1, 2, 0, 1, 2, 0, 2, 0, 1, 0, 2, 1, 1, 2, 0, 2, 1, 1,
+                         1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 2, 0, 0, 2, 1, 2, 1, 0, 1, 2, 1, 1, 1, 0, 1, 1, 2, 2, 2, 0, 0, 2, 2, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 0, 2, 0, 2, 1, 0, 1, 2, 2, 1, 0, 1, 2, 0, 0, 0, 1, 0, 1, 0, 1, 2, 2, 0, 2, 2, 1, 1, 0, 0, 1, 1, 0, 1,
-                                  1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 0, 1, 2, 0, 2, 2, 0, 2, 2, 2, 1, 2, 1, 1, 2, 2, 2, 2, 2, 1, 0, 2, 0, 2, 1, 0, 2, 1, 2, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 0, 2, 0, 2, 1, 0, 1, 2, 2, 1, 0, 1, 2, 0, 0, 0, 1, 0, 1, 0, 1, 2, 2, 0, 2, 2, 1, 1, 0, 0, 1, 1, 0, 1,
+                         1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 0, 1, 2, 0, 2, 2, 0, 2, 2, 2, 1, 2, 1, 1, 2, 2, 2, 2, 2, 1, 0, 2, 0, 2, 1, 0, 2, 1, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 2, 0, 0, 2, 0, 1, 1, 0, 1, 1, 2, 2, 0, 0, 0, 2, 2, 2, 1, 1, 1, 2, 0, 1, 0, 2, 1, 2, 0, 2, 1, 1, 1,
-                                  2, 1, 1, 1, 2, 1, 0, 0, 2, 2, 2, 1, 2, 0, 1, 2, 0, 1, 0, 2, 2, 2, 0, 0, 2, 0, 0, 0, 2, 1, 1, 0, 0, 2, 1, 0, 2, 1, 0, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 2, 0, 0, 2, 0, 1, 1, 0, 1, 1, 2, 2, 0, 0, 0, 2, 2, 2, 1, 1, 1, 2, 0, 1, 0, 2, 1, 2, 0, 2, 1, 1, 1,
+                         2, 1, 1, 1, 2, 1, 0, 0, 2, 2, 2, 1, 2, 0, 1, 2, 0, 1, 0, 2, 2, 2, 0, 0, 2, 0, 0, 0, 2, 1, 1, 0, 0, 2, 1, 0, 2, 1, 0, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
     SmallAlg([
-        Operation.constant(3, 4, [0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 2, 1, 0, 1, 1, 0, 1, 0, 0, 0, 2, 1, 1, 2, 2, 1, 2, 0, 2, 1, 2, 1, 2, 1, 2, 2, 2, 1,
-                                  1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 0, 1, 0, 2, 0, 2, 1, 0, 0, 2, 1, 1, 2, 0, 2, 0, 1, 1, 0, 0, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2]),
-        Operation.constant(3, 0, [0]),
-        Operation.constant(3, 0, [1]),
-        Operation.constant(3, 0, [2]),
+        Operation(3, 4, [0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 2, 1, 0, 1, 1, 0, 1, 0, 0, 0, 2, 1, 1, 2, 2, 1, 2, 0, 2, 1, 2, 1, 2, 1, 2, 2, 2, 1,
+                         1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1, 0, 1, 0, 2, 0, 2, 1, 0, 0, 2, 1, 1, 2, 0, 2, 0, 1, 1, 0, 0, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2]),
+        Operation(3, 0, [0]),
+        Operation(3, 0, [1]),
+        Operation(3, 0, [2]),
     ]),
 ]
 
@@ -904,7 +904,7 @@ def test_hihi():
 
     rels = [rel]
     for _ in range(depth):
-        rel |= rel.closure(oper)
+        rel |= oper.apply(rel)
         rels.append(rel)
 
     rel = rel.polymer([0, 0])

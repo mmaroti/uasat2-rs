@@ -85,6 +85,23 @@ class Relation:
 
         return Relation(size, len(coord), BitVec(Solver.CALC, table))
 
+    @staticmethod
+    def tuples(size: int, arity: int, tuples: Sequence[Sequence[int]]) -> 'Relation':
+        assert size >= 1 and arity >= 0
+
+        length = size ** arity
+        table = [Solver.FALSE for _ in range(length)]
+
+        for tup in tuples:
+            assert len(tup) == arity
+            pos = 0
+            for c in reversed(tup):
+                pos *= size
+                pos += c
+            table[pos] = Solver.TRUE
+
+        return Relation(size, arity, BitVec(Solver.CALC, table))
+
     def polymer(self, new_vars: Sequence[int], new_arity: Optional[int] = None) -> 'Relation':
         assert len(new_vars) == self.arity
         if new_arity is None:

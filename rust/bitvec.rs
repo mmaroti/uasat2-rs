@@ -96,6 +96,18 @@ impl PyBitVec {
         }
     }
 
+    /// This method works for calculator instances with a single
+    /// literal. It returns the value of that literal.
+    pub fn value(&self) -> PyResult<bool> {
+        if !self.solver.get().__bool__() {
+            Err(PyValueError::new_err("solver instance"))
+        } else if self.literals.len() != 1 {
+            Err(PyValueError::new_err("not a single item"))
+        } else {
+            Ok(self.literals[0] == PySolver::TRUE)
+        }
+    }
+
     /// Returns a subslice of this vector.
     #[pyo3(signature = (start, stop, step=1))]
     pub fn slice(me: &Bound<'_, Self>, start: usize, stop: usize, step: usize) -> PyResult<Self> {
@@ -360,8 +372,15 @@ impl PyBitVec {
             }
         }
         let res = solver.bool_and(min1, PySolver::bool_not(min2))?;
-        solver.add_clause1(res);
-        Ok(())
+
+        if res == PySolver::TRUE {
+            Ok(())
+        } else if res == PySolver::FALSE {
+            Err(PyAssertionError::new_err("not exactly one true"))
+        } else {
+            me.get().solver.get().add_clause1(res);
+            Ok(())
+        }
     }
 
     pub fn ensure_amo(me: &Bound<'_, Self>) -> PyResult<()> {
@@ -377,7 +396,14 @@ impl PyBitVec {
             }
         }
         let res = PySolver::bool_not(min2);
-        solver.add_clause1(res);
-        Ok(())
+
+        if res == PySolver::TRUE {
+            Ok(())
+        } else if res == PySolver::FALSE {
+            Err(PyAssertionError::new_err("not at most one true"))
+        } else {
+            me.get().solver.get().add_clause1(res);
+            Ok(())
+        }
     }
 }

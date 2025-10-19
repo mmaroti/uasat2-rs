@@ -53,7 +53,7 @@ class SmallAlg(Algebra):
         assert len(args) == self.signature[op]
         hack = self.operations[op]
         hack = Operation(hack.size, hack.arity, hack.table)
-        elems = [Operation(self.size, 0, arg) for arg in args]
+        elems = [Constant(self.size, arg) for arg in args]
         res = hack.compose(elems)
         assert res.length == self.size
         return res.table
@@ -198,7 +198,7 @@ class Generator:
         print("Steps:")
         steps = []
         for old_step in self.steps:
-            step = [s.solution().decode()[0] for s in old_step]
+            step = [s.solution().decode() for s in old_step]
             steps.append(step)
             print(f"{step},")
         return steps

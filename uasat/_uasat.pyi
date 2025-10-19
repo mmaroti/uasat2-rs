@@ -300,6 +300,12 @@ class BitVec(object):
         Returns the given literal in this vector.
         """
 
+    def value(self) -> bool:
+        """
+        This method works for calculator instances with a single
+        literal. It returns the value of that literal.
+        """
+
     def slice(self, start: int, stop: int, step: int = 1) -> BitVec:
         """
         Returns a subslice of this vector.
@@ -424,7 +430,7 @@ class BitVec(object):
         Makes sure that exactly one literal in this bit vector is true. If
         this is a solver instance, then a single clause is added to the solver.
         If this is a calculator instance, then an assertion error is thrown
-        if all literals are false.
+        if not exactly one literal is true.
         """
 
     def ensure_amo(self):
@@ -432,5 +438,5 @@ class BitVec(object):
         Makes sure that at most one literal in this bit vector is true. If
         this is a solver instance, then a single clause is added to the solver.
         If this is a calculator instance, then an assertion error is thrown
-        if all literals are false.
+        if not at most one literal is true.
         """

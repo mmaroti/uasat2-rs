@@ -200,7 +200,7 @@ class Generator:
         print("Steps:")
         steps = []
         for old_step in self.steps:
-            step = [s.solution().decode()[0] for s in old_step]
+            step = [s.solution().decode() for s in old_step]
             steps.append(step)
             print(f"{step},")
         return steps

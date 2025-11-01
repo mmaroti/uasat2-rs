@@ -45,13 +45,16 @@ class Operation:
         return self.table.solver
 
     @staticmethod
-    def variable(size: int, arity: int, solver: Solver) -> 'Operation':
+    def variable(size: int, arity: int, solver: Solver, partop: bool = False) -> 'Operation':
         assert size >= 1 and arity >= 0
         length = size ** (arity + 1)
 
         table = BitVec.variable(solver, length)
         for start in range(0, length, size):
-            table.slice(start, start + size).ensure_one()
+            if not partop:
+                table.slice(start, start + size).ensure_one()
+            else:
+                table.slice(start, start + size).ensure_amo()
 
         return Operation(size, arity, table)
 
@@ -117,7 +120,7 @@ class Operation:
     def __repr__(self) -> str:
         return f"Operation({self.size}, {self.arity}, {self.solution().decode()})"
 
-    def compose(self, args: Sequence['Operation']) -> 'Operation':
+    def compose(self, args: Sequence['Operation'], partop: bool = False) -> 'Operation':
         assert self.arity == len(args) and self.arity >= 1
         new_arity = args[0].arity
         total = self.arity + 1 + new_arity
@@ -131,7 +134,10 @@ class Operation:
                 [idx] + list(range(self.arity + 1, total)),
                 total)
         rel = rel.fold_any(self.arity)
-        rel.fold_one(1).ensure_all()
+        if not partop:
+            rel.fold_one(1).ensure_all()
+        else:
+            rel.fold_amo(1).ensure_all()
         return Operation(self.size, new_arity, rel.table)
 
     def apply(self, rel: Relation) -> Relation:
@@ -165,17 +171,6 @@ class Operation:
         assert self.size == other.size and self.arity == other.arity
         return self.table.comp_gt(other.table)
 
-    @staticmethod
-    def partop_variable(size: int, arity: int, solver: Solver) -> 'Operation':
-        assert size >= 1 and arity >= 0
-        length = size ** (arity + 1)
-
-        table = BitVec.variable(solver, length)
-        for start in range(0, length, size):
-            table.slice(start, start + size).ensure_amo()
-
-        return Operation(size, arity, table)
-
     def domain(self) -> Relation:
         return self.as_relation().fold_any(1)
 
@@ -203,10 +198,14 @@ class Constant(Operation):
     def variable(  # pyright: ignore[reportIncompatibleMethodOverride]
             size: int,
             solver: Solver,
+            partop: bool = False
     ) -> 'Constant':
         assert size >= 1
         table = BitVec.variable(solver, size)
-        table.ensure_one()
+        if not partop:
+            table.ensure_one()
+        else:
+            table.ensure_amo()
         return Constant(size, table)
 
     def solution(self) -> 'Constant':

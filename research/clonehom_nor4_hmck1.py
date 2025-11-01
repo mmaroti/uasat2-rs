@@ -13,117 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import math
-from typing import Any, List, Sequence, Optional
-from uasat import Solver, BitVec, Constant, Relation, Operation
-
-
-class Algebra:
-    def __init__(self, size: int, length: int, signature: List[int]):
-        assert size >= 1 and length >= 0
-        self.size = size
-        self.length = length
-        assert all(arity >= 0 for arity in signature)
-        self.signature = signature
-
-    def apply(self, op: int, args: List[BitVec]) -> BitVec:
-        assert len(args) == self.signature[op]
-        assert all(len(arg) == self.length for arg in args)
-        raise NotImplementedError()
-
-    def decode_elem(self, elem: BitVec) -> Any:
-        assert len(elem) == self.length
-        return NotImplementedError()
-
-
-class SmallAlg(Algebra):
-    def __init__(self, partialops: List[Operation]):
-        super().__init__(partialops[0].size, partialops[0].size,
-                         [op.arity for op in partialops])
-        self.partialops = partialops
-
-    @staticmethod
-    def unknown(solver: Solver, size: int, signature: List[int]) -> 'SmallAlg':
-        assert size >= 1 and all(arity >= 0 for arity in signature)
-        partialops = [Operation.variable(size, arity, solver)
-                      for arity in signature]
-        return SmallAlg(partialops)
-
-    def apply(self, op: int, args: List[BitVec]) -> BitVec:
-        assert len(args) == self.signature[op]
-        hack = self.partialops[op]
-        hack = Operation(hack.size, hack.arity, hack.table)
-        elems = [Operation(self.size, 0, arg) for arg in args]
-        res = hack.compose(elems)
-        assert res.length == self.size
-        return res.table
-
-    def element(self, index: int) -> BitVec:
-        assert 0 <= index < self.size
-        return Constant.constant(self.size, index).table
-
-    def decode_elem(self, elem: BitVec) -> Any:
-        return Operation(self.size, 0, elem.solution()).decode()[0]
-
-    def solution(self) -> 'SmallAlg':
-        return SmallAlg([op.solution() for op in self.partialops])
-
-    def __repr__(self) -> str:
-        result = "SmallAlg([\n"
-        for op in self.partialops:
-            result += f"    {op},\n"
-        result += "]),"
-        return result
-
-
-class ProductAlg(Algebra):
-    def __init__(self, factors: Sequence[Algebra]):
-        size = math.prod(a.size for a in factors)
-        length = sum(a.length for a in factors)
-        assert all(a.signature == factors[0].signature for a in factors)
-        super().__init__(size, length, factors[0].signature)
-        self.factors = list(factors)
-
-    def apply(self, op: int, args: List[BitVec]) -> BitVec:
-        solver = Solver.CALC
-        literals = []
-        start = 0
-        for alg in self.factors:
-            subargs = [arg.slice(start, start + alg.length) for arg in args]
-            part = alg.apply(op, subargs)
-            solver |= part.solver
-            literals.extend(part.literals)
-            start += alg.length
-        assert start == self.length
-        return BitVec(solver, literals)
-
-    def combine(self, parts: List[BitVec]) -> BitVec:
-        assert len(parts) == len(self.factors)
-        solver = Solver.CALC
-        literals = []
-        for part in parts:
-            solver |= part.solver
-            literals += part.literals
-        assert len(literals) == self.length
-        return BitVec(solver, literals)
-
-    def takeapart(self, elem: BitVec) -> List[BitVec]:
-        assert len(elem) == self.length
-        parts = []
-        start = 0
-        for alg in self.factors:
-            parts.append(elem.slice(start, start + alg.length))
-            start += alg.length
-        return parts
-
-    def decode_elem(self, elem: BitVec) -> List[Any]:
-        result = []
-        start = 0
-        for alg in self.factors:
-            part = elem.slice(start, start + alg.length)
-            result.append(alg.decode_elem(part))
-            start += alg.length
-        return result
+from typing import List, Optional
+from uasat import Solver, BitVec, Constant, Relation, Operation, SmallAlg, ProductAlg
 
 
 class Generator:
@@ -131,8 +22,8 @@ class Generator:
         self.solver = Solver()
 
         self.alg = ProductAlg(algs)
-        elem0 = self.alg.combine([alg.element(0) for alg in algs])
-        elem1 = self.alg.combine([alg.element(1) for alg in algs])
+        elem0 = self.alg.combine([alg.encode_elem(0) for alg in algs])
+        elem1 = self.alg.combine([alg.encode_elem(1) for alg in algs])
 
         self.rel = ProductAlg([self.alg, self.alg, self.alg])
         self.tuples = []
@@ -184,7 +75,7 @@ class Generator:
         self.steps.append([sel_oper, sel_arg0, sel_arg1, sel_arg2, sel_arg3])
 
     def final_loop(self):
-        last = self.rel.takeapart(self.tuples[-1])
+        last = self.rel.splitup(self.tuples[-1])
         last[0].comp_eq(last[1]).ensure_all()
         last[0].comp_eq(last[2]).ensure_all()
 
@@ -221,12 +112,12 @@ def find_term(algs: List[SmallAlg], num_steps: int) -> Optional[List[List[int]]]
 def find_algebra(multi_steps: List[List[List[int]]], size: int = 2) -> Optional[SmallAlg]:
     solver = Solver()
     alg = SmallAlg([
-        Operation.partop_variable(size, 4, solver),
-        Operation.partop_variable(size, 4, solver),
+        Operation.variable(size, 4, solver, partop=True),
+        Operation.variable(size, 4, solver, partop=True),
     ])
 
     assert alg.signature == [4, 4]
-    f1, g1 = alg.partialops
+    f1, g1 = alg.operations
 
     mask = [Solver.FALSE for _ in range(size ** 4)]
     for i in range(size):
@@ -249,8 +140,8 @@ def find_algebra(multi_steps: List[List[List[int]]], size: int = 2) -> Optional[
     Operation.projection(alg.size, 2, 1).comp_eq(
         g1.polymer([0, 0, 0, 1])).ensure_all()
 
-    elem0 = alg.element(0)
-    elem1 = alg.element(1)
+    elem0 = alg.encode_elem(0)
+    elem1 = alg.encode_elem(1)
 
     def term(steps, e0, e1, e2, e3):
         e = [e0, e1, e2, e3]
@@ -391,8 +282,8 @@ def test1():
 def test2():
     alg = ALGS[0]
 
-    elem0 = alg.element(0)
-    elem1 = alg.element(1)
+    elem0 = alg.encode_elem(0)
+    elem1 = alg.encode_elem(1)
 
     es = [elem0, elem0, elem0, elem1]
     es.append(alg.apply(0, [es[3], es[1], es[2], es[0]]))

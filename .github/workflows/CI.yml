@@ -8,10 +8,8 @@ name: CI
 on:
   push:
     branches:
-      - master
-      - citest
     tags:
-      - '*'
+      - 'v*'
   pull_request:
   workflow_dispatch:
 

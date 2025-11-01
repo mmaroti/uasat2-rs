@@ -166,7 +166,9 @@ impl PySolver {
 
     /// Adds the unary clause to the solver.
     pub fn add_clause1(&self, lit0: i32) {
-        self.get_solver().add_clause([lit0]);
+        if lit0 != PySolver::TRUE {
+            self.get_solver().add_clause([lit0]);
+        }
     }
 
     /// Adds the binary clause to the solver.

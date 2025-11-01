@@ -99,7 +99,7 @@ impl PyBitVec {
     /// This method works for calculator instances with a single
     /// literal. It returns the value of that literal.
     pub fn value(&self) -> PyResult<bool> {
-        if !self.solver.get().__bool__() {
+        if self.solver.get().__bool__() {
             Err(PyValueError::new_err("solver instance"))
         } else if self.literals.len() != 1 {
             Err(PyValueError::new_err("not a single item"))

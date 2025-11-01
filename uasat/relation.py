@@ -273,8 +273,7 @@ class Relation:
         return diag.table.fold_all()
 
     def symmetric(self) -> BitVec:
-        assert self.arity == 2
-        return (~self | self.polymer([1, 0])).table.fold_all()
+        return (~self | self.polymer_rotate(-1)).table.fold_all()
 
     def antisymm(self) -> BitVec:
         assert self.arity == 2
@@ -289,6 +288,10 @@ class Relation:
     def transitive(self) -> BitVec:
         assert self.arity == 2
         return (~self.compose(self) | self).table.fold_all()
+
+    def functional(self) -> BitVec:
+        assert self.arity >= 1
+        return self.fold_one().table.fold_all()
 
     def product(self, other: 'Relation') -> 'Relation':
         assert other.size == self.size
@@ -315,8 +318,10 @@ class Relation:
             return self._evaluate_2m(operations[0], operations[1])
         elif oper_arity == 3:
             return self._evaluate_n3(operations)
+        elif self.arity == 3:
+            return self._evaluate_3m(operations[0], operations[1], operations[2])
         else:
-            raise NotImplementedError()
+            return self._evaluate_nm(operations)
 
     def _evaluate_n1(self, opers: List['Relation']) -> 'Relation':
         assert len(opers) == self.arity and self.arity >= 1
@@ -375,6 +380,23 @@ class Relation:
             rel = rel.polymer_rotate(-1)
             rel = rel.fold_any(2)
         return rel
+
+    def _evaluate_3m(self, oper0: 'Relation', oper1: 'Relation', oper2: 'Relation') -> 'Relation':
+        assert self.arity == 3 and oper0.arity == oper1.arity == oper2.arity
+        assert oper0.size == self.size and oper1.size == self.size and oper2.size == self.size
+        test = oper0.polymer(range(0, 2 * oper0.arity, 2), 2 * oper0.arity)
+        test &= oper1.polymer(range(1, 2 * oper0.arity, 2), 2 * oper0.arity)
+        test = test.polymer_rotate(-2)
+        for _ in range(oper0.arity - 1):
+            test = test.polymer_insert(2)
+            test &= self.polymer([0, 1, 2], test.arity)
+            test = test.fold_any(2)
+            test = test.polymer_rotate(-1)
+        test = test.polymer_insert(2)
+        test &= oper2.polymer(range(2, 2 + oper0.arity))
+        test = test.polymer_rotate(-3)
+        test = test.fold_any(oper0.arity - 1)
+        return test
 
     def _evaluate_nm(self, opers: List['Relation']) -> 'Relation':
         assert len(opers) == self.arity and self.arity >= 1

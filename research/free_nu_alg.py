@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy
-from uasat import BitVec, Solver, Relation
+from uasat import BitVec, Solver, Relation, Operation
 from typing import List, Optional
 
 
@@ -250,6 +250,41 @@ def find_siggers6():
         print("No solution")
 
 
+def find_example6():
+    size = 12
+    arity = 4
+    depth = 3
+
+    solver = Solver()
+
+    oper = Operation.variable(size, arity, solver)
+    for idx in range(arity):
+        new_vars = [0] * idx + [1] + [0] * (arity - idx - 1)
+        oper.polymer(new_vars).comp_eq(
+            Operation.projection(size, 2, 0)).ensure_all()
+
+    rel = Relation.tuples(
+        size, 2, [(0, 1), (1, 0), (1, 2), (2, 1), (2, 0), (0, 2)])
+
+    rels = [rel]
+    for _ in range(depth - 1):
+        rel = oper.apply(rel)
+        rels.append(rel)
+
+    (~rel.polymer([0, 0])).ensure_all()
+
+    print("Solving...")
+    if solver.solve():
+        print(oper.solution())
+
+        rel = rels[-1].solution()
+        rel = oper.solution().apply(rel)
+        print(rel.polymer([0, 0]))
+
+    else:
+        print("No solution")
+
+
 def find_siggers4():
     arity = 4
     depth = 5
@@ -273,4 +308,4 @@ def find_siggers4():
 
 
 if __name__ == '__main__':
-    find_siggers6()
+    find_example6()

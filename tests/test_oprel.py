@@ -32,22 +32,8 @@ def test_number_of_posets():
         val = rel.solution()
         print(val.decode())
         count += 1
-        solver.add_clause((rel.table ^ val.table).literals)
+        (rel ^ val).ensure_any()
     assert count == 19
-
-
-def test_commutative_ops():
-    solver = Solver()
-
-    oper = Operation.variable(2, 2, solver)
-    test = oper.comp_eq(oper.polymer([1, 0]))
-    solver.add_clause(test.literals)
-
-    while solver.solve() is True:
-        val = oper.solution()
-        print(val.decode())
-
-        solver.add_clause((oper.table ^ val.table).literals)
 
 
 def test_evaluate_n1():
@@ -150,5 +136,28 @@ def test_evaluate_2m():
             assert False
 
 
+def test_evaluate_3m():
+    for arity in range(1, 4):
+        solver = Solver()
+
+        rel = Relation.variable(2, 3, solver)
+        oper0 = Relation.variable(2, arity, solver)
+        oper1 = Relation.variable(2, arity, solver)
+        oper2 = Relation.variable(2, arity, solver)
+
+        out0 = rel._evaluate_3m(oper0, oper1, oper2)
+        out1 = rel._evaluate_nm([oper0, oper1, oper2])
+        out0.comp_ne(out1).ensure_all()
+
+        if solver.solve():
+            print(rel.solution())
+            print(oper0.solution())
+            print(oper1.solution())
+            print(oper2.solution())
+            print(out0.solution())
+            print(out1.solution())
+            assert False
+
+
 if __name__ == '__main__':
-    test_evaluate_n3()
+    test_evaluate_3m()

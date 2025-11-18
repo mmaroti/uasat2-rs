@@ -144,6 +144,10 @@ class Operation:
         oper = self.as_relation()
         return rel.evaluate([oper for _ in range(rel.arity)])
 
+    def idempotent(self) -> BitVec:
+        diag = self.polymer([0 for _ in range(self.arity)], 1)
+        return diag.comp_eq(Operation.projection(self.size, 1, 0))
+
     def preserves(self, rel: Relation) -> BitVec:
         return (~self.apply(rel) | rel).table.fold_all()
 

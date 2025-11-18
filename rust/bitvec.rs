@@ -330,6 +330,34 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
+    pub fn ensure_true(me: &Bound<'_, Self>) -> PyResult<()> {
+        if me.get().literals.len() != 1 {
+            return Err(PyValueError::new_err("not singleton"));
+        }
+
+        let lit = me.get().literals[0];
+        if me.get().solver.get().__bool__() {
+            me.get().solver.get().add_clause1(lit);
+        } else if lit != PySolver::TRUE {
+            return Err(PyAssertionError::new_err("not true"));
+        }
+        Ok(())
+    }
+
+    pub fn ensure_false(me: &Bound<'_, Self>) -> PyResult<()> {
+        if me.get().literals.len() != 1 {
+            return Err(PyValueError::new_err("not singleton"));
+        }
+
+        let lit = me.get().literals[0];
+        if me.get().solver.get().__bool__() {
+            me.get().solver.get().add_clause1(-lit);
+        } else if lit != PySolver::FALSE {
+            return Err(PyAssertionError::new_err("not false"));
+        }
+        Ok(())
+    }
+
     pub fn ensure_all(me: &Bound<'_, Self>) -> PyResult<()> {
         if me.get().solver.get().__bool__() {
             for lit in me.get().literals.iter() {

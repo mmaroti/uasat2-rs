@@ -599,6 +599,17 @@ ALGS = [
         Operation(2, 4, [0, None, None, 1, None, 0, None,
                          0, 1, None, 1, None, 0, None, None, 1]),
     ]),
+
+    SmallAlg([
+        Operation(3, 4, [0, None, None, None, 0, None, None, None, 0, None, 0, None, None, 1, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 0, None, None, 2, None, None, None, None, None, 0, None, None,
+                         None, 1, None, None, None, 0, None, None, None, None, None, 2, None, None, 2, 0, None, None, None, None, None, 0, None, None, None, None, None, None, 1, None, None, 0, None, 0, None, None, None, 0, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 0, None, None, None, 0, None, 0, None, None, 0, None, None, None, None, None, None, 0, None, None, None, None, None, 2, 1, None, None, 2, None, None, None, None, None, 0, None, None,
+                         None, 1, None, None, None, 0, None, None, None, None, None, 2, None, None, 1, 1, None, None, None, None, None, 0, None, None, None, None, None, None, 0, None, None, 0, None, 0, None, None, None, 0, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 0, None, None, None, 2, None, 0, None, None, 0, None, None, None, None, None, None, 1, None, None, None, None, None, 2, 1, None, None, 2, None, None, None, None, None, 2, None, None,
+                         None, 1, None, None, None, 1, None, None, None, None, None, 1, None, None, 1, 1, None, None, None, None, None, 1, None, None, None, None, None, None, 0, None, None, 2, None, 1, None, None, None, 0, None, None, None, 2]),
+        Operation(3, 4, [0, None, None, None, 0, None, None, None, 2, None, 0, None, None, 0, None, None, None, None, None, None, 1, None, None, None, None, None, 0, 1, None, None, 2, None, None, None, None, None, 2, None, None,
+                         None, 1, None, None, None, 1, None, None, None, None, None, 1, None, None, 1, 2, None, None, None, None, None, 1, None, None, None, None, None, None, 2, None, None, 2, None, 1, None, None, None, 0, None, None, None, 2]),
+    ]),
 ]
 
 

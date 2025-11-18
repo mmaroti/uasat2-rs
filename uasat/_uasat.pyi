@@ -409,6 +409,20 @@ class BitVec(object):
         a single element vector.
         """
 
+    def ensure_true(self):
+        """
+        Takes a bit vector is size 1 and makes sure that the literal inside is
+        true. If this is a calculator instance, then an assertion error is
+        thrown if the literal is not true.
+        """
+
+    def ensure_false(self):
+        """
+        Takes a bit vector is size 1 and makes sure that the literal inside is
+        false. If this is a calculator instance, then an assertion error is
+        thrown if the literal is not false.
+        """
+
     def ensure_all(self):
         """
         Makes sure that all literal in this bit vector is true. If this is a

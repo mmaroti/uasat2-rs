@@ -96,6 +96,26 @@ def test_evaluate_n3():
             assert False
 
 
+def test_evaluate_n4():
+    for arity in range(1, 3):
+        solver = Solver()
+
+        rel = Relation.variable(2, arity, solver)
+        opers = [Relation.variable(2, 4, solver) for _ in range(arity)]
+
+        out0 = rel._evaluate_n4(opers)
+        out1 = rel._evaluate_nm(opers)
+        out0.comp_ne(out1).ensure_all()
+
+        if solver.solve():
+            print(rel.solution())
+            for op in opers:
+                print(op.solution())
+            print(out0.solution())
+            print(out1.solution())
+            assert False
+
+
 def test_evaluate_1m():
     for arity in range(1, 4):
         solver = Solver()

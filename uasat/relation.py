@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 from ._uasat import BitVec, Solver
 
@@ -204,6 +204,14 @@ class Relation:
         table = BitVec(self.solver, table)
         return Relation(self.size, self.arity - count, table)
 
+    def ensure_true(self):
+        assert self.arity == 0
+        self.table.ensure_true()
+
+    def ensure_false(self):
+        assert self.arity == 0
+        self.table.ensure_false()
+
     def ensure_all(self):
         self.table.ensure_all()
 
@@ -222,6 +230,20 @@ class Relation:
     def decode(self) -> List[bool]:
         assert not self.solver
         return [self.table[i] == Solver.TRUE for i in range(self.length)]
+
+    def decode_tuples(self) -> List[Tuple[int, ...]]:
+        assert not self.solver
+
+        result = []
+        for pos in range(self.length):
+            if self.table[pos] == Solver.TRUE:
+                tup = []
+                rem = pos
+                for _ in range(self.arity):
+                    tup.append(rem % self.size)
+                    rem //= self.size
+                result.append(tuple(tup))
+        return result
 
     def __repr__(self) -> str:
         return f"Relation({self.size}, {self.arity}, {self.solution().decode()})"
@@ -320,6 +342,8 @@ class Relation:
             return self._evaluate_n3(operations)
         elif self.arity == 3:
             return self._evaluate_3m(operations[0], operations[1], operations[2])
+        elif oper_arity == 4:
+            return self._evaluate_n4(operations)
         else:
             return self._evaluate_nm(operations)
 
@@ -397,6 +421,26 @@ class Relation:
         test = test.polymer_rotate(-3)
         test = test.fold_any(oper0.arity - 1)
         return test
+
+    def _evaluate_n4(self, opers: List['Relation']) -> 'Relation':
+        assert len(opers) == self.arity and self.arity >= 1
+        assert all(oper.arity == 4 and oper.size == self.size
+                   for oper in opers)
+        rel = self.polymer(range(0, 2 * self.arity, 2), 2 * self.arity)
+        rel &= self.polymer(range(1, 2 * self.arity, 2), 2 * self.arity)
+        for oper in opers:
+            rel = rel.polymer(range(2, 2 + 2 * self.arity), 2 * self.arity + 2)
+            rel &= oper.polymer([0, 1, 2, 3], rel.arity)
+            rel = rel.polymer_rotate(-2)
+            rel = rel.fold_any(2)
+        rel &= self.polymer(range(1, 2 * self.arity, 2), 2 * self.arity)
+        new_vars = []
+        for i in range(self.arity):
+            new_vars.append(self.arity + i)
+            new_vars.append(i)
+        rel = rel.polymer(new_vars, 2 * self.arity)
+        rel = rel.fold_any(self.arity)
+        return rel
 
     def _evaluate_nm(self, opers: List['Relation']) -> 'Relation':
         assert len(opers) == self.arity and self.arity >= 1

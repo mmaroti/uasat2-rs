@@ -27,6 +27,7 @@ use pyo3::prelude::*;
 #[pymodule]
 #[pyo3(name = "_uasat")]
 fn uasat(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_class::<PySolver>()?;
     m.add_class::<PyBitVec>()?;
     Ok(())

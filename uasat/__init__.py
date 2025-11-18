@@ -18,14 +18,13 @@ UASAT library making it easy to work with a SAT solver and solve problems
 related to universal algebra.
 """
 
-__version__ = "0.1.1"
-
-from ._uasat import Solver, BitVec
+from ._uasat import Solver, BitVec, __version__
 from .operation import Operation, Constant
 from .relation import Relation
 from .algebra import Algebra, SmallAlg, ProductAlg
 
 __all__ = [
+    "__version__",
     "Solver",
     "BitVec",
     "Relation",

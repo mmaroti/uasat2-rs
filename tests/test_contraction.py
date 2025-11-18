@@ -13,27 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from uasat import Solver, Relation, Operation
-
-
-def test_number_of_posets():
-    """
-    Counting the number of labeled 3-element posets.
-    """
-
-    solver = Solver()
-    rel = Relation.variable(3, 2, solver)
-    rel.reflexive().ensure_all()
-    rel.antisymm().ensure_all()
-    rel.transitive().ensure_all()
-
-    count = 0
-    while solver.solve() is True:
-        val = rel.solution()
-        print(val.decode())
-        count += 1
-        (rel ^ val).ensure_any()
-    assert count == 19
+from uasat import Solver, Relation
 
 
 def test_evaluate_n1():

@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Callable, List, Optional, Set
+import inspect
 
 
 class Domain:
@@ -24,34 +25,38 @@ class Domain:
     def forall(self, callable: Callable[..., 'Formula'],
                num_vars: Optional[int] = None) -> 'Formula':
         if num_vars is None:
-            num_vars = callable.__code__.co_argcount
+            num_vars = len(inspect.signature(callable).parameters)
 
-        vars = [Variable(self, Variable.next_index + i)
-                for i in range(num_vars)]
+        variables = [Variable(self, Variable.next_index + i)
+                     for i in range(num_vars)]
         Variable.next_index += num_vars
-        formula = callable(*vars)
-        Variable.next_index -= num_vars
+        try:
+            formula = callable(*variables)
+        finally:
+            Variable.next_index -= num_vars
 
         if isinstance(formula, ForAll):
-            return ForAll(vars + formula.variables, formula.formula)
+            return ForAll(variables + formula.variables, formula.formula)
         else:
-            return ForAll(vars, formula)
+            return ForAll(variables, formula)
 
     def exists(self, callable: Callable[..., 'Formula'],
                num_vars: Optional[int] = None) -> 'Formula':
         if num_vars is None:
-            num_vars = callable.__code__.co_argcount
+            num_vars = len(inspect.signature(callable).parameters)
 
-        vars = [Variable(self, Variable.next_index + i)
-                for i in range(num_vars)]
+        variables = [Variable(self, Variable.next_index + i)
+                     for i in range(num_vars)]
         Variable.next_index += num_vars
-        formula = callable(*vars)
-        Variable.next_index -= num_vars
+        try:
+            formula = callable(*variables)
+        finally:
+            Variable.next_index -= num_vars
 
         if isinstance(formula, Exists):
-            return Exists(vars + formula.variables, formula.formula)
+            return Exists(variables + formula.variables, formula.formula)
         else:
-            return Exists(vars, formula)
+            return Exists(variables, formula)
 
 
 class Variable:
@@ -64,7 +69,7 @@ class Variable:
     def __str__(self) -> str:
         return "X" + str(self.index)
 
-    def __eq__(self, other: 'Variable') -> 'Formula':
+    def __eq__(self, other: 'Variable') -> 'Formula':  # type: ignore
         return Equ(self, other)
 
 
@@ -79,6 +84,7 @@ class Relation:
 
     def __call__(self, *variables: Variable) -> 'Formula':
         assert len(variables) == self.arity
+        assert all(v.domain == d for v, d in zip(variables, self.domains))
         return Atomic(self, list(variables))
 
     def functional(self) -> 'Formula':
@@ -228,7 +234,7 @@ class Not(Formula):
 
 class And(Formula):
     def __init__(self, *formulas: Formula):
-        assert all(isinstance(fml, Formula) for fml in formulas)
+        assert all(isinstance(f, Formula) for f in formulas)
         self.formulas = formulas
 
     def __str__(self) -> str:
@@ -244,7 +250,7 @@ class And(Formula):
 
 class Or(Formula):
     def __init__(self, *formulas: Formula):
-        assert all(isinstance(fml, Formula) for fml in formulas)
+        assert all(isinstance(f, Formula) for f in formulas)
         self.formulas = formulas
 
     def __str__(self) -> str:

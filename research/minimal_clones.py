@@ -176,6 +176,6 @@ class MinimalGumm1(MinimalClones):
 
 
 if __name__ == '__main__':
-    clones = MinimalGumm1(3, 3, 3)
+    clones = MinimalMaltsev(3, 3, 3)
     while clones.find_minimal() is not None:
         pass

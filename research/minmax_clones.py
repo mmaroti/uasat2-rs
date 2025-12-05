@@ -143,7 +143,6 @@ class MaximalClones(MinimalClones):
 
             new_operations = []
             if avoid_existing:
-                print(len(self.maximal_clones))
                 for c in self.maximal_clones:
                     if not preserves(operations, c.relations).value():
                         continue
@@ -260,26 +259,54 @@ def test_minimal_maltsev_2():
     while clones.find_minimal([]):
         pass
 
+
 def test_maximal_maltsev_2():
     clones = MaximalMaltsev(2, 3, 3, "rel_3")
     while clones.find_maximal([]):
         pass
 
-def test_maximal_maltsev_2b():
-    if True:
-        clones = MaximalMaltsev(2, 3, 3, "rel_33")
-        while clones.find_maximal([]):
-            pass
-        print()
-
-    if False:
-        clones = MaximalMaltsev(2, 3, 3, "rel_2")
-        while clones.find_maximal([Operation(2, 2, [0, 1, 1, 1]), Operation(2, 2, [0, 0, 0, 1])]):
-            pass
-
 
 def test_maximal_maltsev_3():
-    clones = MaximalMaltsev(3, 3, 3, "rel_33")
+    clones = MaximalMaltsev(3, 3, 4, "refl_2")
+    while clones.find_maximal([]):
+        pass
+
+
+class MaximalMajority(MaximalClones):
+    def __init__(self, size: int, max_relation_arity, max_operation_arity):
+        MaximalClones.__init__(
+            self, size, max_relation_arity, max_operation_arity)
+
+    def maltsev_condition(self, solver: Solver) -> List[Operation]:
+        oper = Operation.variable(self.size, 3, solver)
+
+        oper.polymer([1, 0, 0]).comp_eq(
+            Operation.projection(self.size, 2, 0)).ensure_true()
+        oper.polymer([0, 1, 0]).comp_eq(
+            Operation.projection(self.size, 2, 0)).ensure_true()
+        oper.polymer([0, 0, 1]).comp_eq(
+            Operation.projection(self.size, 2, 0)).ensure_true()
+
+        return [oper]
+
+    def relation_condition(self, solver: Solver) -> List[Relation]:
+        relations = []
+
+        for i in range(self.size):
+            relations.append(Relation.singleton(self.size, [i]))
+
+        for i in range(self.size - 1):
+            for j in range(i + 1, self.size):
+                relations.append(Relation.tuples(self.size, 1, [(i,), (j,)]))
+
+        relations.append(Relation.variable(self.size, 3, solver))
+        # relations[-1].fold_amo(1).fold_all().ensure_true()
+
+        return relations
+
+
+def test_maximal_majority():
+    clones = MaximalMajority(3, 2, 3)
     while clones.find_maximal([]):
         pass
 

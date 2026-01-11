@@ -305,7 +305,7 @@ class Relation:
 
     def compose(self, other: 'Relation') -> 'Relation':
         assert self.arity == other.arity == 2
-        return (self.polymer([1, 0], 3) & self.polymer([0, 2], 3)).fold_any(1)
+        return (self.polymer([1, 0], 3) & other.polymer([0, 2], 3)).fold_any(1)
 
     def transitive(self) -> BitVec:
         assert self.arity == 2

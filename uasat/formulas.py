@@ -22,6 +22,13 @@ class Domain:
         self.name = name
         self.size = size
 
+    def __eq__(self, value: object) -> bool:
+        return isinstance(value, Domain) and \
+            self.name == value.name and self.size == value.size
+
+    def __hash__(self) -> int:
+        return hash(self.name) + 1973 * hash(self.size)
+
     def forall(self, callable: Callable[..., 'Term'],
                num_vars: Optional[int] = None) -> 'Term':
         if num_vars is None:
@@ -36,10 +43,7 @@ class Domain:
         finally:
             Variable.next_index -= num_vars
 
-        if isinstance(term, ForAll):
-            return ForAll(variables + term.variables, term.subterm)
-        else:
-            return ForAll(variables, term)
+        return ForAll(variables, term)
 
     def exists(self, callable: Callable[..., 'Term'],
                num_vars: Optional[int] = None) -> 'Term':
@@ -55,44 +59,7 @@ class Domain:
         finally:
             Variable.next_index -= num_vars
 
-        if isinstance(term, Exists):
-            return Exists(variables + term.variables, term.subterm)
-        else:
-            return Exists(variables, term)
-
-    @staticmethod
-    def forall2(domains: List['Domain'], callable: Callable[..., 'Term']):
-        variables = [Variable(d, Variable.next_index + i)
-                     for i, d in enumerate(domains)]
-
-        Variable.next_index += len(domains)
-        try:
-            term = callable(*variables)
-            assert isinstance(term, Term) and term.domain == BOOLEAN
-        finally:
-            Variable.next_index -= len(domains)
-
-        if isinstance(term, ForAll):
-            return ForAll(variables + term.variables, term.subterm)
-        else:
-            return ForAll(variables, term)
-
-    @staticmethod
-    def exists2(domains: List['Domain'], callable: Callable[..., 'Term']):
-        variables = [Variable(d, Variable.next_index + i)
-                     for i, d in enumerate(domains)]
-
-        Variable.next_index += len(domains)
-        try:
-            term = callable(*variables)
-            assert isinstance(term, Term) and term.domain == BOOLEAN
-        finally:
-            Variable.next_index -= len(domains)
-
-        if isinstance(term, Exists):
-            return Exists(variables + term.variables, term.subterm)
-        else:
-            return Exists(variables, term)
+        return Exists(variables, term)
 
     def __str__(self) -> str:
         return self.name
@@ -121,23 +88,57 @@ class Relation(Operator):
 
     def functional(self) -> 'Term':
         assert len(self.domains) >= 1
-        return Domain.forall2(
+        return forall(
             self.domains[:-1], lambda *vars: self.domains[-1].forall(
-                lambda x, y: ~self(*vars, x) | ~self(*vars, y) | (x == y)))
+                lambda x, y: imp(self(*vars, x), self(*vars, y), equ(x, y))))
 
     def existential(self) -> 'Term':
         assert len(self.domains) >= 1
-        return Domain.forall2(
+        return forall(
             self.domains[:-1], lambda *vars: self.domains[-1].exists(
                 lambda x: self(*vars, x)))
 
 
+class Definition:
+    def __init__(self, variables: List['Variable'], term: 'Term'):
+        assert len(set(variables)) == len(variables)
+        assert term.free_variables.issubset(variables)
+        self.variables = variables
+        self.term = term
+
+    @property
+    def domains(self) -> List[Domain]:
+        return [v.domain for v in self.variables]
+
+    @property
+    def codomain(self) -> Domain:
+        return self.term.domain
+
+    @property
+    def arity(self) -> int:
+        return len(self.variables)
+
+
 class Term:
+    """
+    Represents an expression whose value is in the given domain. The expression
+    may have free variables and can use quantors and operators.
+    """
+
     def __init__(self, domain: Domain):
         self.domain = domain
 
     @property
     def free_variables(self) -> Set['Variable']:
+        """
+        Returns the set of free variables of this term.
+        """
+        raise NotImplementedError()
+
+    def operators(self) -> Set[Operator]:
+        """
+        Returns the set of operators used in this term.
+        """
         raise NotImplementedError()
 
     def __invert__(self) -> 'Term':
@@ -149,55 +150,13 @@ class Term:
             return Not(self)
 
     def __and__(self, other: 'Term') -> 'Term':
-        assert self.domain == BOOLEAN and other.domain == BOOLEAN
-
-        if isinstance(self, And):
-            subterms = list(self.subterms)
-        else:
-            subterms = [self]
-
-        if isinstance(other, And):
-            subterms.extend(other.subterms)
-        else:
-            subterms.append(other)
-
-        return And(*subterms)
+        return And(self, other)
 
     def __or__(self, other: 'Term') -> 'Term':
-        assert self.domain == BOOLEAN and other.domain == BOOLEAN
-
-        if isinstance(self, Or):
-            subterms = list(self.subterms)
-        else:
-            subterms = [self]
-
-        if isinstance(other, Or):
-            subterms.extend(other.subterms)
-        else:
-            subterms.append(other)
-
-        return Or(*subterms)
+        return Or(self, other)
 
     def __xor__(self, other: 'Term') -> 'Term':
-        assert self.domain == BOOLEAN and other.domain == BOOLEAN
-
-        if isinstance(self, Or):
-            subterms = list(self.subterms)
-        else:
-            subterms = [self]
-
-        if isinstance(other, Or):
-            subterms.extend(other.subterms)
-        else:
-            subterms.append(other)
-
-        return Xor(*subterms)
-
-    def __eq__(self, other: 'Term') -> 'Term':  # type: ignore
-        return Equ(self, other)
-
-    def format(self, precedence: int) -> str:
-        return str(self)
+        return Xor(self, other)
 
     def __str__(self) -> str:
         raise NotImplementedError()
@@ -210,9 +169,19 @@ class Variable(Term):
         Term.__init__(self, domain)
         self.index = index
 
+    def __eq__(self, value: object) -> bool:
+        return isinstance(value, Variable) and \
+            self.domain == value.domain and self.index == value.index
+
+    def __hash__(self) -> int:
+        return hash(self.domain) + 2011 * self.index
+
     @property
     def free_variables(self) -> Set['Variable']:
         return set((self,))
+
+    def operators(self) -> Set[Operator]:
+        return set()
 
     def __str__(self) -> str:
         return "x" + str(self.index)
@@ -233,6 +202,12 @@ class Apply(Term):
             vars.update(t.free_variables)
         return vars
 
+    def operators(self) -> Set[Operator]:
+        ops = set((self.operator, ))
+        for t in self.subterms:
+            ops.update(t.operators())
+        return ops
+
     def __str__(self) -> str:
         return self.operator.symbol + "(" + \
             ",".join(str(t) for t in self.subterms) + ")"
@@ -248,15 +223,23 @@ class Not(Term):
     def free_variables(self) -> Set[Variable]:
         return self.subterm.free_variables
 
+    def operators(self) -> Set[Operator]:
+        return self.subterm.operators()
+
     def __str__(self) -> str:
         return "~" + str(self.subterm)
 
 
 class And(Term):
     def __init__(self, *subterms: Term):
-        assert all(t.domain == BOOLEAN for t in subterms)
         Term.__init__(self, BOOLEAN)
-        self.subterms = subterms
+        self.subterms = []
+        for t in subterms:
+            assert t.domain == BOOLEAN
+            if isinstance(t, And):
+                self.subterms.extend(t.subterms)
+            else:
+                self.subterms.append(t)
 
     @property
     def free_variables(self) -> Set[Variable]:
@@ -264,6 +247,12 @@ class And(Term):
         for t in self.subterms:
             vars.update(t.free_variables)
         return vars
+
+    def operators(self) -> Set[Operator]:
+        ops = set()
+        for t in self.subterms:
+            ops.update(t.operators())
+        return ops
 
     def __str__(self) -> str:
         return "(" + " & ".join(str(t) for t in self.subterms) + ")"
@@ -271,9 +260,14 @@ class And(Term):
 
 class Or(Term):
     def __init__(self, *subterms: Term):
-        assert all(t.domain == BOOLEAN for t in subterms)
         Term.__init__(self, BOOLEAN)
-        self.subterms = subterms
+        self.subterms = []
+        for t in subterms:
+            assert t.domain == BOOLEAN
+            if isinstance(t, Or):
+                self.subterms.extend(t.subterms)
+            else:
+                self.subterms.append(t)
 
     @property
     def free_variables(self) -> Set[Variable]:
@@ -281,6 +275,12 @@ class Or(Term):
         for t in self.subterms:
             vars.update(t.free_variables)
         return vars
+
+    def operators(self) -> Set[Operator]:
+        ops = set()
+        for t in self.subterms:
+            ops.update(t.operators())
+        return ops
 
     def __str__(self) -> str:
         return "(" + " | ".join(str(t) for t in self.subterms) + ")"
@@ -288,9 +288,14 @@ class Or(Term):
 
 class Xor(Term):
     def __init__(self, *subterms: Term):
-        assert all(t.domain == BOOLEAN for t in subterms)
         Term.__init__(self, BOOLEAN)
-        self.subterms = subterms
+        self.subterms = []
+        for t in subterms:
+            assert t.domain == BOOLEAN
+            if isinstance(t, Xor):
+                self.subterms.extend(t.subterms)
+            else:
+                self.subterms.append(t)
 
     @property
     def free_variables(self) -> Set[Variable]:
@@ -298,6 +303,12 @@ class Xor(Term):
         for t in self.subterms:
             vars.update(t.free_variables)
         return vars
+
+    def operators(self) -> Set[Operator]:
+        ops = set()
+        for t in self.subterms:
+            ops.update(t.operators())
+        return ops
 
     def __str__(self) -> str:
         return "(" + " ^ ".join(str(t) for t in self.subterms) + ")"
@@ -309,8 +320,13 @@ FALSE = Or()
 
 class ForAll(Term):
     def __init__(self, variables: List[Variable], subterm: Term):
-        assert subterm.domain == BOOLEAN
         Term.__init__(self, BOOLEAN)
+
+        assert subterm.domain == BOOLEAN
+        if isinstance(subterm, ForAll):
+            variables += subterm.variables
+            subterm = subterm.subterm
+
         self.variables = variables
         self.subterm = subterm
 
@@ -322,11 +338,19 @@ class ForAll(Term):
     def free_variables(self) -> Set[Variable]:
         return self.subterm.free_variables.difference(self.variables)
 
+    def operators(self) -> Set[Operator]:
+        return self.subterm.operators()
+
 
 class Exists(Term):
     def __init__(self, variables: List[Variable], subterm: Term):
-        assert subterm.domain == BOOLEAN
         Term.__init__(self, BOOLEAN)
+
+        assert subterm.domain == BOOLEAN
+        if isinstance(subterm, Exists):
+            variables += subterm.variables
+            subterm = subterm.subterm
+
         self.variables = variables
         self.subterm = subterm
 
@@ -337,6 +361,9 @@ class Exists(Term):
     @property
     def free_variables(self) -> Set[Variable]:
         return self.subterm.free_variables.difference(self.variables)
+
+    def operators(self) -> Set[Operator]:
+        return self.subterm.operators()
 
 
 class Equ(Term):
@@ -350,5 +377,72 @@ class Equ(Term):
     def free_variables(self) -> Set[Variable]:
         return self.elem0.free_variables.union(self.elem1.free_variables)
 
+    def operators(self) -> Set[Operator]:
+        return self.elem0.operators().union(self.elem1.operators())
+
     def __str__(self) -> str:
         return str(self.elem0) + "==" + str(self.elem1)
+
+
+class Iff(Term):
+    def __init__(self, test: Term, elem0: Term, elem1: Term):
+        assert test.domain == BOOLEAN and elem0.domain == elem1.domain
+        Term.__init__(self, elem0.domain)
+        self.test = test
+        self.elem0 = elem0
+        self.elem1 = elem1
+
+    @property
+    def free_variables(self) -> Set[Variable]:
+        return self.test.free_variables.union(self.elem0.free_variables).union(
+            self.elem1.free_variables)
+
+    def operators(self) -> Set[Operator]:
+        return self.test.operators().union(self.elem0.operators()).union(
+            self.elem1.operators())
+
+    def __str__(self) -> str:
+        return "(" + str(self.test) + " ? " + str(self.elem0) + " : " + str(self.elem1) + ")"
+
+
+def forall(domains: List['Domain'], callable: Callable[..., 'Term']):
+    variables = [Variable(d, Variable.next_index + i)
+                 for i, d in enumerate(domains)]
+
+    Variable.next_index += len(domains)
+    try:
+        term = callable(*variables)
+        assert isinstance(term, Term) and term.domain == BOOLEAN
+    finally:
+        Variable.next_index -= len(domains)
+
+    if isinstance(term, ForAll):
+        return ForAll(variables + term.variables, term.subterm)
+    else:
+        return ForAll(variables, term)
+
+
+def exists(domains: List['Domain'], callable: Callable[..., 'Term']):
+    variables = [Variable(d, Variable.next_index + i)
+                 for i, d in enumerate(domains)]
+
+    Variable.next_index += len(domains)
+    try:
+        term = callable(*variables)
+        assert isinstance(term, Term) and term.domain == BOOLEAN
+    finally:
+        Variable.next_index -= len(domains)
+
+    if isinstance(term, Exists):
+        return Exists(variables + term.variables, term.subterm)
+    else:
+        return Exists(variables, term)
+
+
+def equ(left: Term, right: Term):
+    return Equ(left, right)
+
+
+def imp(*terms: Term):
+    assert len(terms) >= 1
+    return Or(*([~t for t in terms[:-1]] + [terms[-1]]))

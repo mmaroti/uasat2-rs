@@ -37,6 +37,46 @@ def preserves(operations: List[Operation], relations: List[Relation]) -> BitVec:
     return t
 
 
+def find_new_relation(size: int,
+                      operations: List[Operation],
+                      operation_arity: int,
+                      relations: List[Relation],
+                      relation_arity: int,
+                      find_maximal: bool = True) -> Optional[Relation]:
+    """
+    Finds a better apprixmation of the relational code defined by the specified
+    list of operations. The list of relations must preserve the list of
+    operations. We search for a new relation of arity relation_arity so that it
+    still preserves the list of operation but the relation clone gets closer to
+    the functional clone because there exists a separating operation of arity
+    operation_arity that preserves the old list of relations but not the new one.
+    If find_maximal is true, then we return a maximal such relation which makes
+    it critical.
+    """
+
+    result = None
+    while True:
+        solver = Solver()
+        preserves(operations, relations).ensure_true()
+
+        sep_operation = Operation.variable(size, operation_arity, solver)
+        new_relation = Relation.variable(size, relation_arity, solver)
+
+        preserves(operations, [new_relation]).ensure_true()
+        preserves([sep_operation], relations).ensure_true()
+        preserves([sep_operation], [new_relation]).ensure_false()
+
+        if result is not None:
+            (~result | new_relation).ensure_all()
+            (~result & new_relation).ensure_any()
+
+        if not solver.solve():
+            return result
+        result = new_relation.solution()
+        if not find_maximal:
+            return result
+
+
 class MinimalClones:
     def __init__(self, size: int,
                  max_relation_arity: int):
@@ -84,6 +124,44 @@ class MinimalClones:
 
         operations = [o.solution() for o in operations]
         relations.extend([r.solution() for r in new_relations])
+
+        for relation_arity in range(1, self.max_relation_arity + 1):
+            while True:
+                solver = Solver()
+                new_operations = self.maltsev_condition(solver)
+                preserves(new_operations, relations).ensure_true()
+
+                new_relation = Relation.variable(
+                    self.size, relation_arity, solver)
+                preserves(new_operations, [new_relation]).ensure_true()
+                preserves(operations, [new_relation]).ensure_false()
+
+                if not solver.solve():
+                    break
+
+                operations = [o.solution() for o in new_operations]
+                relations.append(new_relation.solution())
+
+        clone = Clone(operations, relations)
+        print("Adding minimal clone", clone)
+        self.minimal_clones.append(clone)
+        return clone
+
+    def avoid_minimal(self, relations: List[Relation]) -> Optional[Clone]:
+        """
+        Extends the list of relations with extra ones such that the clone of
+        its polymorphisms is not above any of the existing quasi-minimal clone.
+        """
+        relations = list(relations)
+
+        solver = Solver()
+        operations = self.maltsev_condition(solver)
+        preserves(operations, relations).ensure_true()
+
+        if not solver.solve():
+            return None
+
+        operations = [o.solution() for o in operations]
 
         for relation_arity in range(1, self.max_relation_arity + 1):
             while True:

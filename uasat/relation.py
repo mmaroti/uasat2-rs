@@ -248,6 +248,13 @@ class Relation:
     def __repr__(self) -> str:
         return f"Relation({self.size}, {self.arity}, {self.solution().decode()})"
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Relation):
+            return False
+
+        return self.size == other.size and self.arity == other.arity \
+            and self.table.literals == other.table.literals
+
     def comp_eq(self, other: 'Relation') -> BitVec:
         assert self.size == other.size and self.arity == other.arity
         return self.table.comp_eq(other.table)

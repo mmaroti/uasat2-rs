@@ -38,7 +38,7 @@ class CriticalRels:
         self.arity = arity
         self.relations: List[Relation] = []
 
-    def add_relation(self, relation: Relation):
+    def add_relation(self, relation: Relation, permute: bool = True):
         """
         Adds the given relation, which must itself be critical, to the list of
         generator relations. First the coordinates of the relation are permuted
@@ -48,6 +48,13 @@ class CriticalRels:
         """
         assert not relation.solver
         assert relation.size == self.size
+
+        if not permute:
+            assert relation.arity == self.arity
+            if relation not in self.relations:
+                self.relations.append(relation)
+                return
+
         assert relation.arity <= self.arity
 
         coords: List[List[int]] = [[]]
@@ -66,7 +73,7 @@ class CriticalRels:
             if r not in self.relations:
                 self.relations.append(r)
 
-    def find_next(self) -> Optional[Relation]:
+    def find_next(self, permute: bool = True) -> Optional[Relation]:
         """
         Finds a maximal relation comatible with the list of operations which
         is not the intersection of all relations added to this class. The
@@ -97,7 +104,7 @@ class CriticalRels:
 
             if not solver.solve():
                 if base is not None:
-                    self.add_relation(base)
+                    self.add_relation(base, permute)
                 return base
 
             base = rel.solution()

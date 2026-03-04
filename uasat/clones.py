@@ -190,7 +190,7 @@ class MaximalClones(MinimalClones):
     def __init__(self, size: int,
                  max_relation_arity: int,
                  max_operation_arity: int):
-        MinimalClones.__init__(self, size, max_operation_arity)
+        MinimalClones.__init__(self, size, max_relation_arity)
         self.max_operation_arity = max_operation_arity
         self.maximal_clones: List[Clone] = []
 

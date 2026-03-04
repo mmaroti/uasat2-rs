@@ -16,7 +16,31 @@
 from typing import List
 
 from uasat import Solver, Relation, Operation
-from uasat.clones import MaximalClones
+from uasat.clones import MinimalClones, MaximalClones
+
+
+class MinimalMaltsev(MinimalClones):
+    def __init__(self, size: int,
+                 max_relation_arity: int,
+                 ):
+        MinimalClones.__init__(self, size,
+                               max_relation_arity)
+
+    def maltsev_condition(self, solver: Solver) -> List[Operation]:
+        oper = Operation.variable(self.size, 3, solver)
+
+        oper.polymer([0, 1, 1]).comp_eq(
+            Operation.projection(self.size, 2, 0)).ensure_true()
+        oper.polymer([0, 0, 1]).comp_eq(
+            Operation.projection(self.size, 2, 1)).ensure_true()
+
+        return [oper]
+
+
+def test_minimal_maltsev_2():
+    clones = MinimalMaltsev(2, 3)
+    while clones.find_minimal([]):
+        pass
 
 
 class MaximalMaltsev(MaximalClones):
@@ -74,12 +98,6 @@ class MaximalMaltsev(MaximalClones):
         return relations
 
 
-def test_minimal_maltsev_2():
-    clones = MaximalMaltsev(2, 3, 3, "rel_3")
-    while clones.find_minimal([]):
-        pass
-
-
 def test_maximal_maltsev_2():
     clones = MaximalMaltsev(2, 3, 3, "rel_3")
     while clones.find_maximal([]):
@@ -132,4 +150,4 @@ def test_maximal_majority():
 
 
 if __name__ == '__main__':
-    test_maximal_maltsev_3()
+    test_maximal_maltsev_2()

@@ -7,7 +7,7 @@ name = "uasat"
 authors = [{ name = "Miklos Maroti", email = "mmaroti@gmail.com" }]
 description = "A python library for using SAT solvers for universal algebraic research"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -18,7 +18,10 @@ classifiers = [
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 dynamic = ["version"]
-dependencies = ["click"]
+dependencies = ["click", "cotengra", "kahypar", "cmaes"]
+
+[tool.uv.sources]
+cotengra = { git = "https://github.com/jcmgray/cotengra.git" }
 
 [project.scripts]
 uasat = "uasat.__main__:cli"

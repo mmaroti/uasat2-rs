@@ -15,7 +15,7 @@
 
 from typing import List, Optional
 
-from ._uasat import Solver, BitVec
+from ._uasat import Solver
 from .operation import Operation
 from .relation import Relation
 

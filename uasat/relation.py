@@ -333,6 +333,20 @@ class Relation:
     def evaluate(self, operations: List['Relation']) -> 'Relation':
         assert len(operations) == self.arity and self.arity >= 1
         oper_arity = operations[0].arity
+        inputs = []
+        for i in range(self.arity):
+            inputs.append((operations[i],
+                           tuple(range(i, self.arity * oper_arity, self.arity))))
+        output = tuple(range(self.arity))
+        for i in range(1, oper_arity):
+            inputs.append(
+                (self, tuple(range(i * self.arity, (i + 1) * self.arity))))
+        from .contract import contract
+        return contract(inputs, output)
+
+    def evaluate_old(self, operations: List['Relation']) -> 'Relation':
+        assert len(operations) == self.arity and self.arity >= 1
+        oper_arity = operations[0].arity
         assert oper_arity >= 1
         assert all(oper.arity == oper_arity and oper.size == self.size
                    for oper in operations)

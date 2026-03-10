@@ -159,5 +159,26 @@ def test_evaluate_3m():
             assert False
 
 
+def test_evaluate_new():
+    for rel_arity in range(1, 4):
+        for oper_arity in range(1, 4):
+            print(rel_arity, oper_arity)
+            solver = Solver()
+
+            rel = Relation.variable(2, rel_arity, solver)
+            opers = [Relation.variable(2, oper_arity, solver)
+                     for _ in range(rel_arity)]
+
+            out1 = rel._evaluate_nm(opers)
+            out2 = rel.evaluate(opers)
+            out1.comp_eq(out2).ensure_false()
+
+            if solver.solve():
+                print(rel.solution())
+                for oper in opers:
+                    print(oper.solution())
+                assert False
+
+
 if __name__ == '__main__':
-    test_evaluate_3m()
+    test_evaluate_new()

@@ -13,11 +13,207 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import List, Optional, Iterable
 
 from ._uasat import Solver, BitVec
 from .operation import Operation
 from .relation import Relation
+
+
+class FunClone:
+    def __init__(self, size: int, operations: List[Operation]):
+        for o in operations:
+            assert o.size == size and not o.solver
+        self.size = size
+        self.operations = operations
+
+    def __repr__(self) -> str:
+        return f"FunClone({self.size}, {self.operations})"
+
+
+class RelClone:
+    def __init__(self, size: int, relations: List[Relation]):
+        for r in relations:
+            assert r.size == size and not r.solver
+        self.size = size
+        self.relations = relations
+
+    def __repr__(self) -> str:
+        return f"RelClone({self.size}, {self.relations})"
+
+
+def preserves(operations: Iterable[Operation], relations: Iterable[Relation]) -> BitVec:
+    t = BitVec(Solver.CALC, [Solver.TRUE])
+    for o in operations:
+        for r in relations:
+            t &= o.preserves(r)
+    return t
+
+
+class FindRelClone:
+    """
+    This class can be used to find a relational clone approximation of
+    a functional clone. The clone defined by the found relations will
+    be above the starting functional clone and can be made as close to
+    it as possible.
+    """
+
+    def __init__(self, fun_clone: FunClone):
+        self.size = fun_clone.size
+        self.operations = fun_clone.operations
+        self.relations: List[Relation] = []
+
+    def result(self) -> RelClone:
+        return RelClone(self.size, self.relations)
+
+    def add_relations(self, relations: List[Relation]):
+        """
+        Adds the given relations to the relational clone approximation.
+        """
+        for rel in relations:
+            assert rel.size == self.size and not rel.solver
+            preserves(self.operations, [rel]).ensure_true()
+            self.relations.append(rel)
+
+    def find_relation(self, rel_arity: int, fun_arity: int,
+                      select: str = "any") -> Optional[Relation]:
+        """
+        Finds a new relation that makes the relational clone approximation
+        closer to the functional clone. The arity of the new relation is
+        specified and the fun_arity is used to find a separating operation
+        that ensures that the new relation is indeed makes the relational
+        clone closer. If the selection criteria is max or min, then among
+        all possible relations we select a maximal or minimal one.
+        """
+        assert select in ("any", "max", "min")
+
+        result = None
+        while True:
+            solver = Solver()
+
+            new_relation = Relation.variable(self.size, rel_arity, solver)
+            sep_operation = Operation.variable(self.size, fun_arity, solver)
+
+            preserves(self.operations, [new_relation]).ensure_true()
+            preserves([sep_operation], self.relations).ensure_true()
+            preserves([sep_operation], [new_relation]).ensure_false()
+
+            if select == "max" and result is not None:
+                (~result | new_relation).ensure_all()
+                (~result & new_relation).ensure_any()
+            elif select == "min" and result is not None:
+                (~new_relation | result).ensure_all()
+                (~new_relation & result).ensure_any()
+
+            if not solver.solve():
+                return result
+
+            result = new_relation.solution()
+            if select == "any":
+                return result
+
+    def execute(self, max_rel_arity: int, fun_arity: int,
+                select: str = "any",
+                debug: bool = False):
+        """
+        Adds all relations of up to max_rel_arity that can be repeatedly found
+        using the find_relation method.
+        """
+        for rel_arity in range(1, max_rel_arity + 1):
+            while True:
+                rel = self.find_relation(rel_arity, fun_arity, select)
+                if rel is None:
+                    break
+                if debug:
+                    print(rel)
+                self.relations.append(rel)
+
+    def __repr__(self) -> str:
+        return f"FindRelClone({FunClone(self.size, self.operations)})"
+
+
+class FindFunClone:
+    """
+    This class can be used to find a functional clone approximation of
+    a relational clone. The clone defined by the found operations will
+    be below the starting relational clone and can be made as close to
+    it as possible.
+    """
+
+    def __init__(self, rel_clone: RelClone):
+        self.size = rel_clone.size
+        self.relations = rel_clone.relations
+        self.operations: List[Operation] = []
+
+    def result(self) -> FunClone:
+        return FunClone(self.size, self.operations)
+
+    def add_operations(self, operations: List[Operation]):
+        """
+        Adds the given operations to the fun functional clone approximation.
+        """
+        for oper in operations:
+            assert oper.size == self.size and not oper.solver
+            preserves([oper], self.relations).ensure_true()
+            self.operations.append(oper)
+
+    def find_operation(self, fun_arity: int, rel_arity: int,
+                       select: str = "any") -> Optional[Operation]:
+        """
+        Finds a new operation that makes the functional clone approximation
+        closer to the relational clone. The arity of the new operation is
+        specified and the rel_arity is used to find a separating relation
+        that ensures that the new operation is indeed makes the functional
+        clone closer. If the selection criteria is max or min, then among
+        all possible separating relations we select a maximal or minimal one.
+        """
+        assert select in ("any", "max", "min")
+
+        result_fun = None
+        result_rel = None
+        while True:
+            solver = Solver()
+
+            new_funtion = Operation.variable(self.size, fun_arity, solver)
+            sep_relation = Relation.variable(self.size, rel_arity, solver)
+
+            preserves([new_funtion], self.relations).ensure_true()
+            preserves(self.operations, [sep_relation]).ensure_true()
+            preserves([new_funtion], [sep_relation]).ensure_false()
+
+            if not solver.solve():
+                return result_fun
+
+            if select == "max" and result_rel is not None:
+                (~result_rel | sep_relation).ensure_all()
+                (~result_rel & sep_relation).ensure_any()
+            elif select == "min" and result_rel is not None:
+                (~sep_relation | result_rel).ensure_all()
+                (~sep_relation & result_rel).ensure_any()
+
+            result_fun = new_funtion.solution()
+            if select == "any":
+                return result_fun
+            result_rel = sep_relation.solution()
+
+    def execute(self, max_fun_arity: int, rel_arity: int,
+                select: str = "any",
+                debug: bool = False):
+        """
+        Adds all relations of up to max_rel_arity that can be repeatedly found
+        using the find_relation method.
+        """
+        for fun_arity in range(1, max_fun_arity + 1):
+            while True:
+                fun = self.find_operation(fun_arity, rel_arity, select)
+                if fun is None:
+                    break
+                if debug:
+                    print(fun)
+                self.operations.append(fun)
+
+    def __repr__(self) -> str:
+        return f"FindFunClone({RelClone(self.size, self.relations)})"
 
 
 class Clone:
@@ -27,54 +223,6 @@ class Clone:
 
     def __repr__(self) -> str:
         return f"Clone({self.operations}, {self.relations})"
-
-
-def preserves(operations: List[Operation], relations: List[Relation]) -> BitVec:
-    t = BitVec(Solver.CALC, [Solver.TRUE])
-    for o in operations:
-        for r in relations:
-            t &= o.preserves(r)
-    return t
-
-
-def find_new_relation(size: int,
-                      operations: List[Operation],
-                      operation_arity: int,
-                      relations: List[Relation],
-                      relation_arity: int,
-                      find_maximal: bool = True) -> Optional[Relation]:
-    """
-    Finds a better apprixmation of the relational code defined by the specified
-    list of operations. The list of relations must preserve the list of
-    operations. We search for a new relation of arity relation_arity so that it
-    still preserves the list of operation but the relation clone gets closer to
-    the functional clone because there exists a separating operation of arity
-    operation_arity that preserves the old list of relations but not the new one.
-    If find_maximal is true, then we return a maximal such relation which makes
-    it critical.
-    """
-
-    result = None
-    while True:
-        solver = Solver()
-        preserves(operations, relations).ensure_true()
-
-        sep_operation = Operation.variable(size, operation_arity, solver)
-        new_relation = Relation.variable(size, relation_arity, solver)
-
-        preserves(operations, [new_relation]).ensure_true()
-        preserves([sep_operation], relations).ensure_true()
-        preserves([sep_operation], [new_relation]).ensure_false()
-
-        if result is not None:
-            (~result | new_relation).ensure_all()
-            (~result & new_relation).ensure_any()
-
-        if not solver.solve():
-            return result
-        result = new_relation.solution()
-        if not find_maximal:
-            return result
 
 
 class MinimalClones:

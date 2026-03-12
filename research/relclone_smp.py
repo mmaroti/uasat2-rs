@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from uasat import Relation, Operation
-from uasat.clones import find_new_relation
+from uasat.clones import FunClone, FindRelClone
 from uasat.critical_rels import CriticalRels
 from typing import Tuple
 
@@ -54,48 +54,70 @@ def test_smp_relcone():
         0, 0, 1, 1,
     ])
 
-    relations = [
-        Relation(4, 1, [True, True, False, False]),
-        Relation(4, 1, [True, False, False, False]),
-        Relation(4, 2, [True, True, False, False,
-                        True, True, False, False,
-                        False, False, True, True,
-                        False, False, True, True]),
-        Relation(4, 2, [True, False, False, False,
-                        False, True, False, False,
-                        False, False, False, True,
-                        False, False, True, False]),
-        Relation(4, 2, [True, True, False, False,
-                        False, False, True, True,
-                        False, False, False, False,
-                        False, False, False, False]),
-        Relation(4, 3, [True, True, False, False,
-                        False, False, True, True,
-                        False, False, False, False,
-                        False, False, False, False,
+    fun_clone = FunClone(4, [plus, prod])
+    find_rel_clone = FindRelClone(fun_clone)
 
-                        False, False, True, True,
-                        True, True, False, False,
-                        False, False, False, False,
-                        False, False, False, False,
+    if True:
+        find_rel_clone.execute(3, 4, select="min", debug=True)
+    else:
+        find_rel_clone.add_relations([
+            Relation(4, 1, [True, False, False, False]),
 
-                        False, False, False, False,
-                        False, False, False, False,
-                        True, True, False, False,
-                        False, False, True, True,
+            Relation(4, 1, [True, True, False, False]),
 
-                        False, False, False, False,
-                        False, False, False, False,
-                        False, False, True, True,
-                        True, True, False, False]),
-    ]
+            Relation(4, 2, [True, True, False, False,
+                            False, False, True, True,
+                            False, False, False, False,
+                            False, False, False, False]),
 
-    for r in relations:
-        print(r.decode_tuples())
+            Relation(4, 2, [True, False, False, False,
+                            False, True, False, False,
+                            False, False, False, True,
+                            False, False, True, False]),
 
-    new_rel = find_new_relation(
-        4, [plus, prod], 4, relations, 3)
-    print(new_rel)
+            Relation(4, 3, [True, True, False, False,
+                            True, True, False, False,
+                            False, False, True, True,
+                            False, False, True, True,
+
+                            False, False, True, True,
+                            False, False, True, True,
+                            True, True, False, False,
+                            True, True, False, False,
+
+                            False, False, False, False,
+                            False, False, False, False,
+                            False, False, False, False,
+                            False, False, False, False,
+
+                            False, False, False, False,
+                            False, False, False, False,
+                            False, False, False, False,
+                            False, False, False, False]),
+
+            Relation(4, 3, [True, False, False, False,
+                            False, True, False, False,
+                            False, False, False, False,
+                            False, False, False, False,
+
+                            False, True, False, False,
+                            True, False, False, False,
+                            False, False, False, False,
+                            False, False, False, False,
+
+                            False, False, False, False,
+                            False, False, False, False,
+                            False, True, False, False,
+                            True, False, False, False,
+
+                            False, False, False, False,
+                            False, False, False, False,
+                            True, False, False, False,
+                            False, True, False, False]),
+        ])
+
+    rel = find_rel_clone.find_relation(4, 3)
+    print(rel)
 
 
 def test_critical_rels():
@@ -191,5 +213,6 @@ def test_critical_rels():
 
 
 if __name__ == '__main__':
+    test_smp_relcone()
     # test_smp_relcone()
-    test_critical_rels()
+    # test_critical_rels()

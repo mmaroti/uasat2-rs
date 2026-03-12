@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from uasat import Relation, Operation, Solver
-from uasat.clones import find_new_relation, MaximalClones
+from uasat.clones import FunClone, FindRelClone, MaximalClones
 from uasat.critical_rels import CriticalRels
 from typing import List
 
@@ -22,32 +22,35 @@ from typing import List
 def maltsev2_relclone():
     minority = Operation(2, 3, [0, 1, 1, 0, 1, 0, 0, 1])
 
-    relations = [
-        Relation(2, 1, [False, True]),
-        Relation(2, 1, [True, False]),
-        Relation(2, 2, [False, True, True, False]),
-        Relation(2, 3, [False, True, True, False, True, False, False, True]),
-    ]
+    find = FindRelClone(FunClone(2, [minority]))
 
-    new_rel = find_new_relation(
-        2, [minority], 4, relations, 4)
-    print(new_rel)
+    if True:
+        find.execute(4, 4, "min", debug=True)
+    else:
+        find.add_relations([
+            Relation(2, 1, [True, False]),
+            Relation(2, 1, [False, True]),
+            Relation(2, 2, [False, True, True, False]),
+            Relation(2, 3, [True, False, False, True,
+                     False, True, True, False]),
+        ])
 
 
 def majority2_relclone():
     majority = Operation(2, 3, [0, 0, 0, 1, 0, 1, 1, 1])
 
-    relations = [
-        Relation(2, 1, [False, True]),
-        Relation(2, 1, [True, False]),
-        Relation(2, 2, [False, True, True, True]),
-        Relation(2, 2, [True, False, True, True]),
-        Relation(2, 2, [True, True, True, False]),
-    ]
+    find = FindRelClone(FunClone(2, [majority]))
 
-    new_rel = find_new_relation(
-        2, [majority], 4, relations, 3)
-    print(new_rel)
+    if True:
+        find.execute(4, 4, "max", debug=True)
+    else:
+        find.add_relations([
+            Relation(2, 1, [True, False]),
+            Relation(2, 1, [False, True]),
+            Relation(2, 2, [False, True, True, True]),
+            Relation(2, 2, [True, False, True, True]),
+            Relation(2, 2, [True, True, True, False]),
+        ])
 
 
 class MaximalMajority(MaximalClones):
@@ -87,5 +90,5 @@ def majority2_minimal():
 
 if __name__ == '__main__':
     # maltsev2_relclone()
-    # majority2_relclone()
-    majority2_minimal()
+    majority2_relclone()
+    # majority2_minimal()

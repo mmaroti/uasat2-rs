@@ -25,7 +25,7 @@ def maltsev2_relclone():
     find = FindRelClone(FunClone(2, [minority]))
 
     if True:
-        find.execute(4, 4, "min", debug=True)
+        find.find_relations(4, 4, "min", debug=True)
     else:
         find.add_relations([
             Relation(2, 1, [True, False]),
@@ -42,7 +42,7 @@ def majority2_relclone():
     find = FindRelClone(FunClone(2, [majority]))
 
     if True:
-        find.execute(4, 4, "max", debug=True)
+        find.find_relations(4, 4, "max", debug=True)
     else:
         find.add_relations([
             Relation(2, 1, [True, False]),

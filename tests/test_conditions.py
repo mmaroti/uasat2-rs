@@ -13,29 +13,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-UASAT library making it easy to work with a SAT solver and solve problems
-related to universal algebra.
-"""
+from uasat import FunClone
+from uasat.conditions import MajorityCond, FindMinCond, FindAllMinConds
 
-from ._uasat import Solver, BitVec, __version__
-from .operation import Operation, Constant
-from .relation import Relation
-from .algebra import Algebra, SmallAlg, ProductAlg
-from .clones import FunClone, RelClone, FindFunClone, FindRelClone
 
-__all__ = [
-    "__version__",
-    "Solver",
-    "BitVec",
-    "Relation",
-    "Operation",
-    "Constant",
-    "Algebra",
-    "SmallAlg",
-    "ProductAlg",
-    "FunClone",
-    "RelClone",
-    "FindFunClone",
-    "FindRelClone",
-]
+def test_majority():
+    finder1 = FindAllMinConds(3, MajorityCond(), debug=True)
+
+    while True:
+        clone = finder1.find_initial(2)
+        if clone is None:
+            break
+
+        print("Initial clone:", clone)
+
+        finder2 = FindMinCond(3, MajorityCond(), clone, debug=True)
+        finder2.find_relations(2)
+
+        clone = finder2.result()
+        print("Minimal clone:", clone)
+
+        finder1.add_clone(clone)
+
+
+if __name__ == '__main__':
+    test_majority()

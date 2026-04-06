@@ -112,9 +112,9 @@ class FindRelClone:
             if select == "any":
                 return result
 
-    def execute(self, max_rel_arity: int, fun_arity: int,
-                select: str = "any",
-                debug: bool = False):
+    def find_relations(self, max_rel_arity: int, fun_arity: int,
+                       select: str = "any",
+                       debug: bool = False):
         """
         Adds all relations of up to max_rel_arity that can be repeatedly found
         using the find_relation method.
@@ -196,9 +196,9 @@ class FindFunClone:
                 return result_fun
             result_rel = sep_relation.solution()
 
-    def execute(self, max_fun_arity: int, rel_arity: int,
-                select: str = "any",
-                debug: bool = False):
+    def find_operations(self, max_fun_arity: int, rel_arity: int,
+                        select: str = "any",
+                        debug: bool = False):
         """
         Adds all relations of up to max_rel_arity that can be repeatedly found
         using the find_relation method.

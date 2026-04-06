@@ -58,7 +58,7 @@ def test_smp_relcone():
     find_rel_clone = FindRelClone(fun_clone)
 
     if True:
-        find_rel_clone.execute(3, 4, select="min", debug=True)
+        find_rel_clone.find_relations(3, 4, select="min", debug=True)
     else:
         find_rel_clone.add_relations([
             Relation(4, 1, [True, False, False, False]),

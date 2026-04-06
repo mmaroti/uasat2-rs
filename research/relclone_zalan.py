@@ -16,7 +16,24 @@
 from uasat import Relation, Operation, Solver
 from uasat.clones import FunClone, FindRelClone, MaximalClones
 from uasat.critical_rels import CriticalRels
+from uasat.conditions import MajorityCond, MaltsevCond, FindAllMinConds
 from typing import List
+
+
+def minimal_majority3():
+    finder = FindAllMinConds(3, MajorityCond(), debug=False)
+    finder.find_minimal_conditions(2)
+    finder.print_result()
+
+def minimal_maltsev2():
+    finder = FindAllMinConds(2, MaltsevCond(), debug=False)
+    finder.find_minimal_conditions(3)
+    finder.print_result()
+
+def minimal_maltsev3():
+    finder = FindAllMinConds(3, MaltsevCond(), debug=False)
+    finder.find_minimal_conditions(4)
+    finder.print_result()
 
 
 def maltsev2_relclone():
@@ -90,5 +107,6 @@ def majority2_minimal():
 
 if __name__ == '__main__':
     # maltsev2_relclone()
-    majority2_relclone()
+    # majority2_relclone()
     # majority2_minimal()
+    minimal_maltsev3()

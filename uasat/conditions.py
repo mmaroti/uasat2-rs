@@ -15,7 +15,7 @@
 
 from typing import List, Optional
 
-from ._uasat import Solver
+from ._uasat import Solver, BitVec
 from .operation import Operation, Relation
 from .clones import preserves, FunClone
 
@@ -129,7 +129,7 @@ class FindOneMinCond:
         Finds a new relation that makes the relational clone closer to the
         already selected functional clone. If a new relation is found, then it
         is automatically added to the list of relations bounding the
-        functional condition
+        functional condition.
         """
 
         solver = Solver()
@@ -150,6 +150,68 @@ class FindOneMinCond:
 
         self.relations.append(new_relation)
         return new_relation
+
+    def find_bounding_relations(self, max_rel_arity: int):
+        for arity in range(1, max_rel_arity + 1):
+            while self.find_bounding_relation(arity):
+                pass
+
+    def find_bounding_relation_alt(self, rel_arity: int,
+                                   clones: List[FunClone]) -> Optional[Relation]:
+        """
+        Finds a new relation that makes is above the selected functional clone
+        but eliminates at least one of the list of clones. If a new relation
+        is found, then it is automatically added to the list of relations
+        bounding the functional condition and the list of clones is updated by
+        removing those clones that are already not below the clone defined by
+        the new relation.
+        """
+        if True:
+            for c in clones:
+                preserves(c.operations, self.relations).ensure_true()
+
+        solver = Solver()
+
+        new_relation = Relation.variable(self.size, rel_arity, solver)
+        preserves(self.operations, [new_relation]).ensure_true()
+
+        ands = BitVec(Solver.CALC, [Solver.TRUE])
+        vals: List[BitVec] = []
+        for c in clones:
+            val = preserves(c.operations, [new_relation])
+            vals.append(val)
+            ands &= val
+
+        if not ands.solver and ands.value():
+            return None
+        ands.ensure_false()
+
+        if not solver.solve():
+            return None
+
+        new_relation = new_relation.solution()
+        if self.debug:
+            print("Bounding:", new_relation)
+
+        self.relations.append(new_relation)
+
+        for idx in range(len(clones) - 1, -1, -1):
+            if not vals[idx].solution().value():
+                clones.pop(idx)
+
+        return new_relation
+
+    def find_bounding_relations_alt(self, max_rel_arity: int,
+                                    clones: List[FunClone]):
+        clones = list(clones)
+
+        for rel_arity in range(1, max_rel_arity + 1):
+            while self.find_bounding_relation_alt(rel_arity, clones):
+                pass
+            if not clones:
+                break
+        else:
+            raise ValueError("bad arity or list of clones")
 
     def find_minimizer_relation(self, rel_arity: int) -> Optional[Relation]:
         """
@@ -209,18 +271,18 @@ class FindAllMinConds:
         self.size = size
         self.condition = condition
         self.debug = debug
-        self.minimals: List[FindOneMinCond] = []
+        self.minimals: List[FunClone] = []
 
     def result(self) -> List[FunClone]:
-        return [m.result() for m in self.minimals]
+        return self.minimals
 
     def print_result(self):
         for m in self.minimals:
-            print(m.result())
+            print(m)
 
-    def find_minimal_condition(self, rel_arity: int) -> Optional[FindOneMinCond]:
+    def find_minimal_condition(self, rel_arity: int) -> Optional[FunClone]:
         """
-        Finds an initial functional clone that is not above any of the already
+        Finds an functional clone that is not above any of the already
         selected minimal clones. The resulted functional clone is automatically
         added to the list of minimal clones.
         """
@@ -239,16 +301,20 @@ class FindAllMinConds:
             return None
 
         clone = FunClone(self.size, [o.solution() for o in operations])
-        minimal = FindOneMinCond(self.size, self.condition, clone, self.debug)
+        finder = FindOneMinCond(self.size, self.condition, clone, self.debug)
+
+        finder.find_bounding_relations_alt(rel_arity, self.minimals)
 
         for arity in range(1, rel_arity + 1):
-            while minimal.find_bounding_relation(arity):
+            while finder.find_minimizer_relation(arity):
                 pass
 
-        while minimal.find_minimizer_relation(rel_arity):
-            pass
-
+        minimal = finder.result()
         self.minimals.append(minimal)
+
+        if self.debug:
+            print("Minimal clone:", minimal)
+
         return minimal
 
     def find_minimal_conditions(self, rel_arity: int):

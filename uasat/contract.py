@@ -47,6 +47,12 @@ def contract_pair(rel1: Relation,
 
 def contract(inputs: List[Tuple[Relation, Tuple[Any, ...]]],
              output: Tuple[Any, ...]) -> Relation:
+    if len(inputs) == 1:
+        rel, var = inputs[0]
+        if var == output:
+            return rel
+        return contract_pair(rel, var, Relation.full(rel.size, 0), (), output)
+
     global OPTIMIZER
     if OPTIMIZER is None:
         OPTIMIZER = cotengra.ReusableHyperOptimizer()
@@ -63,23 +69,20 @@ def contract(inputs: List[Tuple[Relation, Tuple[Any, ...]]],
 
     # print(input_vars, output, size_dict)
     tree = OPTIMIZER.search(input_vars, output, size_dict)
-    data = {tree.input_to_node(idx): rel
-            for idx, (rel, _) in enumerate(inputs)}
+    data = {tree.input_to_node(idx): item
+            for idx, item in enumerate(inputs)}
 
     for a, b, c in tree.traverse():
-        var1 = tuple(tree.get_legs(b))
-        var2 = tuple(tree.get_legs(c))
         if tree.root == a:
             var3 = output
         else:
             var3 = tuple(tree.get_legs(a))
 
-        rel1 = data[b]
-        del data[b]
-        rel2 = data[c]
-        del data[c]
-        assert var3 not in data
-        data[a] = contract_pair(rel1, var1, rel2, var2, var3)
+        # Leaf tables still have their original axes: cotengra's leaf legs
+        # describe preprocessing that our backend has not performed yet.
+        rel1, var1 = data.pop(b)
+        rel2, var2 = data.pop(c)
+        data[a] = (contract_pair(rel1, var1, rel2, var2, var3), var3)
 
     assert len(data) == 1
-    return next(iter(data.values()))
+    return next(iter(data.values()))[0]

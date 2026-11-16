@@ -14,6 +14,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from uasat import Solver, Relation
+from uasat.contract import contract
+
+
+def test_contract_input_transformations():
+    rel = Relation.tuples(2, 2, [(0, 1)])
+    for variables, output, add_full, expected in [
+        (("x", "y"), ("x", "y"), False, [(0, 1)]),
+        (("x", "y"), ("y",), False, [(1,)]),
+        (("x", "y"), ("y", "x"), False, [(1, 0)]),
+        (("x", "x"), ("x",), False, []),
+        (("x", "y"), (), False, [()]),
+        (("x", "y"), ("y",), True, [(1,)]),
+        (("x", "x"), ("x",), True, []),
+        (("x", "y"), (), True, [()]),
+    ]:
+        inputs = [(rel, variables)]
+        if add_full:
+            inputs.append((Relation.full(2, 1), (variables[-1],)))
+        assert contract(inputs, output).decode_tuples() == expected
 
 
 def test_evaluate_n1():

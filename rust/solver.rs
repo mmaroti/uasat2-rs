@@ -20,6 +20,25 @@ use pyo3::prelude::*;
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, SystemTime};
 
+// These converters run only at the Python boundary. Internal Rust calls use
+// validated literals directly, without repeating the checks.
+pub(super) fn extract_literal(obj: &Bound<'_, PyAny>) -> PyResult<i32> {
+    let lit = obj.extract::<i32>()?;
+    if lit == 0 || lit == i32::MIN {
+        Err(PyValueError::new_err("invalid literal"))
+    } else {
+        Ok(lit)
+    }
+}
+
+pub(super) fn extract_literals(obj: &Bound<'_, PyAny>) -> PyResult<Vec<i32>> {
+    let mut literals = Vec::with_capacity(obj.len()?);
+    for item in obj.try_iter()? {
+        literals.push(extract_literal(&item?)?);
+    }
+    Ok(literals)
+}
+
 /// Helper structure to check for python signals.
 struct CheckSignal {
     last: SystemTime,
@@ -54,6 +73,11 @@ impl cadical::Callbacks for CheckSignal {
 pub struct PySolver(Option<Mutex<cadical::Solver<CheckSignal>>>);
 
 impl PySolver {
+    /// Adds a clause from trusted Rust literals without copying or validating.
+    pub(super) fn add_clause_iter(&self, clause: impl IntoIterator<Item = i32>) {
+        self.get_solver().add_clause(clause);
+    }
+
     fn get_solver(&self) -> MutexGuard<'_, cadical::Solver<CheckSignal>> {
         self.0
             .as_ref()
@@ -159,30 +183,45 @@ impl PySolver {
 
     /// Adds the given clause to the solver. Negated literals are negative
     /// integers, positive literals are positive ones. All literals must be
-    /// non-zero.
-    pub fn add_clause(&self, clause: Vec<i32>) {
-        self.get_solver().add_clause(clause);
+    /// non-zero and different from i32::MIN.
+    pub fn add_clause(&self, #[pyo3(from_py_with = extract_literals)] clause: Vec<i32>) {
+        self.add_clause_iter(clause);
     }
 
     /// Adds the unary clause to the solver.
-    pub fn add_clause1(&self, lit0: i32) {
+    pub fn add_clause1(&self, #[pyo3(from_py_with = extract_literal)] lit0: i32) {
         if lit0 != PySolver::TRUE {
             self.get_solver().add_clause([lit0]);
         }
     }
 
     /// Adds the binary clause to the solver.
-    pub fn add_clause2(&self, lit0: i32, lit1: i32) {
+    pub fn add_clause2(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+    ) {
         self.get_solver().add_clause([lit0, lit1]);
     }
 
     /// Adds the ternary clause to the solver.
-    pub fn add_clause3(&self, lit0: i32, lit1: i32, lit2: i32) {
+    pub fn add_clause3(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+        #[pyo3(from_py_with = extract_literal)] lit2: i32,
+    ) {
         self.get_solver().add_clause([lit0, lit1, lit2]);
     }
 
     /// Adds the quaternary clause to the solver.
-    pub fn add_clause4(&self, lit0: i32, lit1: i32, lit2: i32, lit3: i32) {
+    pub fn add_clause4(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+        #[pyo3(from_py_with = extract_literal)] lit2: i32,
+        #[pyo3(from_py_with = extract_literal)] lit3: i32,
+    ) {
         self.get_solver().add_clause([lit0, lit1, lit2, lit3]);
     }
 
@@ -206,7 +245,10 @@ impl PySolver {
 
     /// Solves the formula defined by the set of clauses under the given
     /// assumptions.
-    pub fn solve_with(&self, assumptions: Vec<i32>) -> PyResult<bool> {
+    pub fn solve_with(
+        &self,
+        #[pyo3(from_py_with = extract_literals)] assumptions: Vec<i32>,
+    ) -> PyResult<bool> {
         if let Some(val) = self.get_solver().solve_with(assumptions) {
             Ok(val)
         } else {
@@ -227,7 +269,7 @@ impl PySolver {
     /// state of the solver must be `Some(true)`. The returned value is
     /// `None` if the formula is satisfied regardless of the value of the
     /// literal.
-    pub fn get_value(&self, literal: i32) -> Option<bool> {
+    pub fn get_value(&self, #[pyo3(from_py_with = extract_literal)] literal: i32) -> Option<bool> {
         self.get_solver().value(literal)
     }
 
@@ -242,7 +284,7 @@ impl PySolver {
     /// Returns the negated literal.
     #[inline]
     #[staticmethod]
-    pub fn bool_not(lit: i32) -> i32 {
+    pub fn bool_not(#[pyo3(from_py_with = extract_literal)] lit: i32) -> i32 {
         -lit
     }
 
@@ -258,7 +300,11 @@ impl PySolver {
     }
 
     /// Returns the disjunction of a pair of elements.
-    pub fn bool_or(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+    pub fn bool_or(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+    ) -> PyResult<i32> {
         if lit0 == Self::TRUE || lit1 == Self::TRUE || lit0 == Self::bool_not(lit1) {
             Ok(Self::TRUE)
         } else if lit0 == Self::FALSE || lit0 == lit1 {
@@ -279,19 +325,31 @@ impl PySolver {
 
     /// Returns the conjunction of a pair of elements.
     #[inline]
-    pub fn bool_and(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+    pub fn bool_and(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+    ) -> PyResult<i32> {
         self.bool_or(Self::bool_not(lit0), Self::bool_not(lit1))
             .map(Self::bool_not)
     }
 
     /// Returns the logical implication of a pair of elements.
     #[inline]
-    pub fn bool_imp(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+    pub fn bool_imp(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+    ) -> PyResult<i32> {
         self.bool_or(Self::bool_not(lit0), lit1)
     }
 
     /// Returns the exclusive or of a pair of elements.
-    pub fn bool_xor(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+    pub fn bool_xor(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+    ) -> PyResult<i32> {
         if lit0 == Self::FALSE {
             Ok(lit1)
         } else if lit0 == Self::TRUE {
@@ -323,12 +381,21 @@ impl PySolver {
 
     /// Returns the logical equivalence of a pair of elements.
     #[inline]
-    pub fn bool_equ(&self, lit0: i32, lit1: i32) -> PyResult<i32> {
+    pub fn bool_equ(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+    ) -> PyResult<i32> {
         self.bool_xor(Self::bool_not(lit0), lit1)
     }
 
     /// Returns the majority of three elements.
-    pub fn bool_maj(&self, lit0: i32, lit1: i32, lit2: i32) -> PyResult<i32> {
+    pub fn bool_maj(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+        #[pyo3(from_py_with = extract_literal)] lit2: i32,
+    ) -> PyResult<i32> {
         if lit0 == lit1 || lit0 == lit2 || lit1 == Self::bool_not(lit2) {
             Ok(lit0)
         } else if lit1 == lit2 || lit0 == Self::bool_not(lit2) {
@@ -363,7 +430,12 @@ impl PySolver {
     }
 
     /// Returns 'lit1' if 'lit0' is true, otherwise 'lit2' is returned.
-    pub fn bool_iff(&self, lit0: i32, lit1: i32, lit2: i32) -> PyResult<i32> {
+    pub fn bool_iff(
+        &self,
+        #[pyo3(from_py_with = extract_literal)] lit0: i32,
+        #[pyo3(from_py_with = extract_literal)] lit1: i32,
+        #[pyo3(from_py_with = extract_literal)] lit2: i32,
+    ) -> PyResult<i32> {
         if lit1 == lit2 || lit0 == Self::TRUE {
             Ok(lit1)
         } else if lit0 == Self::FALSE {
@@ -395,7 +467,7 @@ impl PySolver {
     pub fn fold_all(&self, lits: Bound<'_, PyAny>) -> PyResult<i32> {
         let mut res = Self::TRUE;
         for lit in lits.try_iter()? {
-            let lit = lit?.extract::<i32>()?;
+            let lit = extract_literal(&lit?)?;
             res = self.bool_and(res, lit)?;
             if res == Self::FALSE {
                 break;
@@ -408,7 +480,7 @@ impl PySolver {
     pub fn fold_any(&self, lits: Bound<'_, PyAny>) -> PyResult<i32> {
         let mut res = Self::FALSE;
         for lit in lits.try_iter()? {
-            let lit = lit?.extract::<i32>()?;
+            let lit = extract_literal(&lit?)?;
             res = self.bool_or(res, lit)?;
             if res == Self::TRUE {
                 break;
@@ -422,7 +494,7 @@ impl PySolver {
         let mut min1 = Self::FALSE;
         let mut min2 = Self::FALSE;
         for lit in lits.try_iter()? {
-            let lit = lit?.extract::<i32>()?;
+            let lit = extract_literal(&lit?)?;
             let tmp = self.bool_and(min1, lit)?;
             min2 = self.bool_or(min2, tmp)?;
             min1 = self.bool_or(min1, lit)?;
@@ -438,7 +510,7 @@ impl PySolver {
         let mut min1 = Self::FALSE;
         let mut min2 = Self::FALSE;
         for lit in lits.try_iter()? {
-            let lit = lit?.extract::<i32>()?;
+            let lit = extract_literal(&lit?)?;
             let tmp = self.bool_and(min1, lit)?;
             min2 = self.bool_or(min2, tmp)?;
             min1 = self.bool_or(min1, lit)?;
@@ -466,8 +538,8 @@ impl PySolver {
                 return Err(PyValueError::new_err("length mismatch"));
             }
 
-            let a = a.unwrap()?.extract::<i32>()?;
-            let b = b.unwrap()?.extract::<i32>()?;
+            let a = extract_literal(&a.unwrap()?)?;
+            let b = extract_literal(&b.unwrap()?)?;
 
             let c = self.bool_equ(a, b)?;
             res = self.bool_and(res, c)?;
@@ -503,8 +575,8 @@ impl PySolver {
                 return Err(PyValueError::new_err("length mismatch"));
             }
 
-            let a = a.unwrap()?.extract::<i32>()?;
-            let b = b.unwrap()?.extract::<i32>()?;
+            let a = extract_literal(&a.unwrap()?)?;
+            let b = extract_literal(&b.unwrap()?)?;
 
             let c = self.bool_xor(a, b)?;
             res = self.bool_iff(c, b, res)?;

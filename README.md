@@ -79,5 +79,6 @@ environment. Then run `python3 -m pytest` to run the validation tests. Build
 with `maturin build` and `maturin build --sdist`, and upload with
 `twine upload -r testpypi target/wheels/*`.
 
-With `uv`, run `uv run --extra tests python -m pytest` from the repository root
-to install the test dependencies and run the tests using the project environment.
+With `uv`, run `uv run --reinstall-package uasat --extra tests python -m pytest`
+from the repository root to install the test dependencies and run the tests
+using the project environment.

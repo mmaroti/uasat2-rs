@@ -18,6 +18,7 @@
 use pyo3::exceptions::{PyAssertionError, PyIndexError, PyValueError};
 use pyo3::prelude::*;
 
+use super::solver::extract_literals;
 use super::PySolver;
 use std::fmt::Write;
 
@@ -31,7 +32,10 @@ pub struct PyBitVec {
 impl PyBitVec {
     /// Creates a new bit vector with the associated solver and literals.
     #[new]
-    pub fn new(solver: Py<PySolver>, literals: Vec<i32>) -> PyResult<Self> {
+    pub fn new(
+        solver: Py<PySolver>,
+        #[pyo3(from_py_with = extract_literals)] literals: Vec<i32>,
+    ) -> PyResult<Self> {
         if !solver.get().__bool__() {
             for &a in literals.iter() {
                 if a != PySolver::TRUE && a != PySolver::FALSE {
@@ -375,7 +379,10 @@ impl PyBitVec {
 
     pub fn ensure_any(me: &Bound<'_, Self>) -> PyResult<()> {
         if me.get().solver.get().__bool__() {
-            me.get().solver.get().add_clause(me.get().literals.to_vec());
+            me.get()
+                .solver
+                .get()
+                .add_clause_iter(me.get().literals.iter().copied());
             Ok(())
         } else {
             for lit in me.get().literals.iter() {

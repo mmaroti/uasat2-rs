@@ -52,19 +52,19 @@ def contract(inputs: List[Tuple[Relation, Tuple[Any, ...]]],
         OPTIMIZER = cotengra.ReusableHyperOptimizer()
 
     size_dict: Dict[Any, int] = dict()
-    data = dict()
     input_vars = []
-    for idx, (rel, var) in enumerate(inputs):
+    for rel, var in inputs:
         for v in var:
             if v in size_dict:
                 assert size_dict[v] == rel.size
             else:
                 size_dict[v] = rel.size
         input_vars.append(var)
-        data[frozenset({idx})] = rel
 
     # print(input_vars, output, size_dict)
     tree = OPTIMIZER.search(input_vars, output, size_dict)
+    data = {tree.input_to_node(idx): rel
+            for idx, (rel, _) in enumerate(inputs)}
 
     for a, b, c in tree.traverse():
         var1 = tuple(tree.get_legs(b))
@@ -82,4 +82,4 @@ def contract(inputs: List[Tuple[Relation, Tuple[Any, ...]]],
         data[a] = contract_pair(rel1, var1, rel2, var2, var3)
 
     assert len(data) == 1
-    return data[tree.root]
+    return next(iter(data.values()))

@@ -18,10 +18,7 @@ classifiers = [
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
 dynamic = ["version"]
-dependencies = ["click", "cotengra", "kahypar", "cmaes"]
-
-[tool.uv.sources]
-cotengra = { git = "https://github.com/jcmgray/cotengra.git" }
+dependencies = ["click", "cotengra>=0.8.3,<0.9", "kahypar", "cmaes"]
 
 [project.scripts]
 uasat = "uasat.__main__:cli"

@@ -78,3 +78,6 @@ interfaces to the `rust` objects is implemented using `maturin`. Use
 environment. Then run `python3 -m pytest` to run the validation tests. Build
 with `maturin build` and `maturin build --sdist`, and upload with
 `twine upload -r testpypi target/wheels/*`.
+
+With `uv`, run `uv run --extra tests python -m pytest` from the repository root
+to install the test dependencies and run the tests using the project environment.

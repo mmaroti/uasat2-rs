@@ -34,11 +34,11 @@ class Domain:
 
     def bool_iff(self, elem0: BitVec, elem1: BitVec, elem2: BitVec) -> BitVec:
         assert len(elem0) == 1 and len(elem1) == len(elem2) == self.length
-        solver = elem0.solver or elem1.solver or elem2.solver
+        solver = elem0.solver | elem1.solver | elem2.solver
         test = elem0.literals[0]
         lits = [solver.bool_iff(test, l1, l2)
                 for l1, l2 in zip(elem1.literals, elem2.literals)]
-        return BitVec(elem0.solver, lits)
+        return BitVec(solver, lits)
 
 
 class Product(Domain):

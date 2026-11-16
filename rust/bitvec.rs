@@ -379,7 +379,7 @@ impl PyBitVec {
             Ok(())
         } else {
             for lit in me.get().literals.iter() {
-                if *lit != PySolver::TRUE {
+                if *lit == PySolver::TRUE {
                     return Ok(());
                 }
             }

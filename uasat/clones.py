@@ -181,15 +181,15 @@ class FindFunClone:
             preserves(self.operations, [sep_relation]).ensure_true()
             preserves([new_funtion], [sep_relation]).ensure_false()
 
-            if not solver.solve():
-                return result_fun
-
             if select == "max" and result_rel is not None:
                 (~result_rel | sep_relation).ensure_all()
                 (~result_rel & sep_relation).ensure_any()
             elif select == "min" and result_rel is not None:
                 (~sep_relation | result_rel).ensure_all()
                 (~sep_relation & result_rel).ensure_any()
+
+            if not solver.solve():
+                return result_fun
 
             result_fun = new_funtion.solution()
             if select == "any":

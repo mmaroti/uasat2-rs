@@ -319,8 +319,9 @@ class Relation:
         return (~self.compose(self) | self).table.fold_all()
 
     def functional(self) -> BitVec:
+        """Tests whether each input tuple has exactly one output in coordinate 0."""
         assert self.arity >= 1
-        return self.fold_one().table.fold_all()
+        return self.fold_one(1).table.fold_all()
 
     def product(self, other: 'Relation') -> 'Relation':
         assert other.size == self.size

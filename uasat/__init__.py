@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-UASAT library making it easy to work with a SAT solver and solve problems
+The UASAT library makes it easy to work with a SAT solver and solve problems
 related to universal algebra.
 """
 

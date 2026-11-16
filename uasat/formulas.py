@@ -122,7 +122,7 @@ class Definition:
 class Term:
     """
     Represents an expression whose value is in the given domain. The expression
-    may have free variables and can use quantors and operators.
+    may have free variables and can use quantifiers and operators.
     """
 
     def __init__(self, domain: Domain):

@@ -39,7 +39,7 @@ pub(super) fn extract_literals(obj: &Bound<'_, PyAny>) -> PyResult<Vec<i32>> {
     Ok(literals)
 }
 
-/// Helper structure to check for python signals.
+/// Helper structure to check for Python signals.
 struct CheckSignal {
     last: SystemTime,
 }
@@ -111,7 +111,7 @@ impl PySolver {
         Self(Some(Mutex::new(solver)))
     }
 
-    /// Constructs a new solver with one of the following pre-defined
+    /// Constructs a new solver with one of the following predefined
     /// configurations of advanced internal options:
     /// * `default`: set default advanced internal options
     /// * `plain`: disable all internal preprocessing options
@@ -143,7 +143,7 @@ impl PySolver {
         }
     }
 
-    /// Retruns TRUE if this is a real solver instance, and FALSE
+    /// Returns TRUE if this is a real solver instance, and FALSE
     /// if this is just the calculator instance.
     #[inline]
     pub fn __bool__(&self) -> bool {
@@ -151,8 +151,8 @@ impl PySolver {
     }
 
     /// Returns a pointer to either this or the other solver, whichever is
-    /// not the calculator instance. If neither is static and they are different
-    /// then an error is returned.
+    /// not the calculator instance. If both are real solver instances and they
+    /// are different, an error is returned.
     pub fn __or__(me: &Bound<'_, Self>, other: Py<Self>) -> PyResult<Py<Self>> {
         if me.get().0.is_none() || me.is(&other) {
             Ok(other)
@@ -489,7 +489,7 @@ impl PySolver {
         Ok(res)
     }
 
-    /// Computes the exactly one predicate over the given elements.
+    /// Computes the exactly-one predicate over the given elements.
     pub fn fold_one(&self, lits: Bound<'_, PyAny>) -> PyResult<i32> {
         let mut min1 = Self::FALSE;
         let mut min2 = Self::FALSE;
@@ -505,7 +505,7 @@ impl PySolver {
         self.bool_and(min1, Self::bool_not(min2))
     }
 
-    /// Computes the at most one predicate over the given elements.
+    /// Computes the at-most-one predicate over the given elements.
     pub fn fold_amo(&self, lits: Bound<'_, PyAny>) -> PyResult<i32> {
         let mut min1 = Self::FALSE;
         let mut min2 = Self::FALSE;
@@ -584,7 +584,7 @@ impl PySolver {
     }
 
     /// Returns true if the first sequence is smaller than the second one
-    /// as a binary number hen the least significant digit is the first one.
+    /// as a binary number when the least significant digit is the first one.
     /// The two sequences must have the same length.
     pub fn comp_lt(&self, lits0: Bound<'_, PyAny>, lits1: Bound<'_, PyAny>) -> PyResult<i32> {
         self.comp_le(lits1, lits0).map(Self::bool_not)
@@ -598,7 +598,7 @@ impl PySolver {
     }
 
     /// Returns true if the first sequence is greater than the second one
-    /// as a binary number hen the least significant digit is the first one.
+    /// as a binary number when the least significant digit is the first one.
     /// The two sequences must have the same length.
     pub fn comp_gt(&self, lits0: Bound<'_, PyAny>, lits1: Bound<'_, PyAny>) -> PyResult<i32> {
         self.comp_le(lits0, lits1).map(Self::bool_not)

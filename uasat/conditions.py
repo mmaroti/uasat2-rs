@@ -79,7 +79,7 @@ class FindOneMinCond:
     """
     This class can be used to find a minimal functional clone among all clones
     satisfying a functional condition. The found clone will be below an initial
-    functional clone. First, we approximnate this initial functional clone by
+    functional clone. First, we approximate this initial functional clone by
     adding relations, then make this functional condition as small as possible
     by adding further relations.
     """
@@ -159,11 +159,11 @@ class FindOneMinCond:
     def find_bounding_relation_alt(self, rel_arity: int,
                                    clones: List[FunClone]) -> Optional[Relation]:
         """
-        Finds a new relation that makes is above the selected functional clone
-        but eliminates at least one of the list of clones. If a new relation
-        is found, then it is automatically added to the list of relations
+        Finds a new relation whose polymorphism clone is above the selected
+        functional clone but excludes at least one clone from the list. If a
+        new relation is found, it is automatically added to the list of relations
         bounding the functional condition and the list of clones is updated by
-        removing those clones that are already not below the clone defined by
+        removing those clones that are no longer below the clone defined by
         the new relation.
         """
         if True:
@@ -243,8 +243,8 @@ class FindOneMinCond:
 
     def find_relations(self, max_rel_arity: int):
         """
-        Adds all relations of up to max_rel_arity that can be repeatedly found
-        using the find_relation method.
+        Adds all relations of arity up to max_rel_arity that can be repeatedly
+        found using the bounding and minimizer relation searches.
         """
 
         for rel_arity in range(1, max_rel_arity + 1):
@@ -282,8 +282,8 @@ class FindAllMinConds:
 
     def find_minimal_condition(self, rel_arity: int) -> Optional[FunClone]:
         """
-        Finds an functional clone that is not above any of the already
-        selected minimal clones. The resulted functional clone is automatically
+        Finds a functional clone that is not above any of the already
+        selected minimal clones. The resulting functional clone is automatically
         added to the list of minimal clones.
         """
 

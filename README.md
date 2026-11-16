@@ -1,14 +1,14 @@
-# UASAT: a SAT solver based universal algebra calculator
+# UASAT: a universal algebra calculator based on a SAT solver
 
-This is a python library to aid universal algebraic research by generating
-simple examples and counterexamples. For example you can work with finitary
-relations and operations on a finite set and express various contraints
+This is a Python library to aid research in universal algebra by generating
+simple examples and counterexamples. For example, you can work with finitary
+relations and operations on a finite set and express various constraints
 between them. The underlying SAT solver is CaDiCaL 1.9.5, which is an
-incremental SAT solver. This can be used to enumberate and count examples.
-All relations and operations are represented by multi-dimensional matrices
-with literal entries. When performing operations on these object new
+incremental SAT solver. It can be used to enumerate and count examples.
+All relations and operations are represented by multidimensional matrices
+with literal entries. When operations are performed on these objects, new
 literals and clauses are added automatically to the solver. The usual
-operations on relations and operations are supported, as seen in the
+operations on relations and operations are supported, as shown in the
 following two small examples.
 
 
@@ -61,21 +61,21 @@ def test_polymorphisms_of_c3():
 
 ## Installation
 
-Use `pip install uasat` to install the package from PyPI (maybe use a virtual
-environment). You do NOT need to download the source from github or build the
-library yourself, but you can certainly do that. The code of the library with
-some research scripts are available at
-[https://github.com/mmaroti/uasat2-rs]().
-You can test the library is properly installed with the following command
+Use `pip install uasat` to install the package from PyPI, preferably in a virtual
+environment. You do not need to download the source from GitHub or build the
+library yourself, but you can certainly do that. The library's source code and
+some research scripts are available in the
+[GitHub repository](https://github.com/mmaroti/uasat2-rs).
+You can check that the library is installed correctly with the following command:
 `python3 -c "import uasat; help(uasat.Solver)"`.
 
 ## Development
 
-Some of the functionality of the library is implemented in `rust`. The CaDiCaL
-SAT solver is implemented in `c++` but compiled by `rust`. The `python`
-interfaces to the `rust` objects is implemented using `maturin`. Use
-`maturin develop` to compile the library on your machine, and set up a virtual
-environment. Then run `python3 -m pytest` to run the validation tests. Build
+Some of the library's functionality is implemented in Rust. The CaDiCaL
+SAT solver is implemented in C++ and compiled as part of the Rust build. The Python
+interfaces to the Rust objects are built using `maturin`. Set up a virtual
+environment, then use `maturin develop` to compile the library on your machine.
+Run `python3 -m pytest` to run the validation tests. Build
 with `maturin build` and `maturin build --sdist`, and upload with
 `twine upload -r testpypi target/wheels/*`.
 

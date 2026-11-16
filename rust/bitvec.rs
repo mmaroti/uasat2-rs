@@ -48,8 +48,8 @@ impl PyBitVec {
         Ok(PyBitVec { solver, literals })
     }
 
-    /// Constructs a new bit vector of length length filled with fresh
-    /// new literals from the solver.
+    /// Constructs a new bit vector of length `count` filled with fresh
+    /// literals from the solver.
     #[staticmethod]
     pub fn variable(solver: Py<PySolver>, count: u32) -> PyResult<Self> {
         if solver.get().__bool__() {
@@ -62,7 +62,7 @@ impl PyBitVec {
     }
 
     /// Returns the associated solver for this bit vector. If the solver is
-    /// `None``, then all literals are `TRUE`` or `FALSE``. Otherwise, the
+    /// the calculator, then all literals are `TRUE` or `FALSE`. Otherwise, the
     /// elements are literals of the solver and their value is not yet known.
     #[getter]
     pub fn get_solver(me: &Bound<'_, Self>) -> Py<PySolver> {

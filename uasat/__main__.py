@@ -24,6 +24,6 @@ def cli():
 @cli.command(context_settings={'show_default': True})
 def test():
     """
-    Test script for making sure that things works.
+    Test script to check that the library works.
     """
     print("Hello from UASAT!")

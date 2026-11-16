@@ -41,9 +41,9 @@ class CriticalRels:
     def add_relation(self, relation: Relation, permute: bool = True):
         """
         Adds the given relation, which must itself be critical, to the list of
-        generator relations. First the coordinates of the relation are permuted
-        and extended with dummy coordinates (cartesian product with the full
-        relation) to generate all possible minions and then these are added to
+        generator relations. First, the coordinates of the relation are permuted
+        and extended with dummy coordinates (Cartesian product with the full
+        relation) to generate all possible minors, which are then added to
         the list of already known critical relations.
         """
         assert not relation.solver
@@ -75,9 +75,9 @@ class CriticalRels:
 
     def find_next(self, permute: bool = True) -> Optional[Relation]:
         """
-        Finds a maximal relation comatible with the list of operations which
+        Finds a maximal relation compatible with the list of operations that
         is not the intersection of all relations added to this class. The
-        returned relation is necessarily will be a new critical relation. If
+        returned relation is necessarily a new critical relation. If
         such a relation is found, then it will be automatically added to the
         list of known critical relations.
         """

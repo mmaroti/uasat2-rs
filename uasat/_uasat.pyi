@@ -35,7 +35,7 @@ class Solver(object):
     @staticmethod
     def with_config(config: str) -> Solver:
         """
-        Constructs a new solver with one of the following pre-defined
+        Constructs a new solver with one of the following predefined
         configurations of advanced internal options:
         * `default`: set default advanced internal options
         * `plain`: disable all internal preprocessing options
@@ -57,15 +57,15 @@ class Solver(object):
 
     def __bool__(self) -> bool:
         """
-        Retruns TRUE if this is a real solver instance, and FALSE
+        Returns TRUE if this is a real solver instance, and FALSE
         if this is just the calculator instance.
         """
 
     def __or__(self, other: Solver) -> Solver:
         """
         Returns a pointer to either this or the other solver, whichever is
-        not the static calculator instance. If neither is and they are
-        different then an error is returned.
+        not the calculator instance. If both are real solver instances and
+        they are different, an error is returned.
         """
 
     def add_variable(self, count: int = 1) -> int:
@@ -167,7 +167,7 @@ class Solver(object):
 
     def bool_and(self, lit0: int, lit1: int) -> int:
         """
-        Computes the disjunction of the elements.
+        Computes the conjunction of the elements.
         """
 
     def bool_imp(self, lit0: int, lit1: int) -> int:
@@ -207,12 +207,12 @@ class Solver(object):
 
     def fold_one(self, lits: Iterable[int]) -> int:
         """
-        Computes the exactly one predicate over the given elements.
+        Computes the exactly-one predicate over the given elements.
         """
 
     def fold_amo(self, lits: Iterable[int]) -> int:
         """
-        Computes the at most one predicate over the given elements.
+        Computes the at-most-one predicate over the given elements.
         """
 
     def comp_eq(self, lits0: Iterable[int], lits1: Iterable[int]) -> int:
@@ -236,7 +236,7 @@ class Solver(object):
     def comp_lt(self, lits0: Iterable[int], lits1: Iterable[int]) -> int:
         """
         Returns true if the first sequence is smaller than the second one
-        as a binary number hen the least significant digit is the first one.
+        as a binary number when the least significant digit is the first one.
         The two sequences must have the same length.
         """
 
@@ -250,16 +250,16 @@ class Solver(object):
     def comp_gt(self, lits0: Iterable[int], lits1: Iterable[int]) -> int:
         """
         Returns true if the first sequence is greater than the second one
-        as a binary number hen the least significant digit is the first one.
+        as a binary number when the least significant digit is the first one.
         The two sequences must have the same length.
         """
 
 
 class BitVec(object):
     """
-    A vector of literals of a solver. If the solver is None, then all literals
-    are either TRUE or FALSE. Otherwise, the value of the literals are not yet
-    known.
+    A vector of literals associated with a solver. If the solver is the
+    calculator, then all literals are either TRUE or FALSE. Otherwise, their
+    values are not yet known.
     """
 
     def __init__(self, solver: Solver, literals: List[int]):
@@ -271,21 +271,21 @@ class BitVec(object):
     @staticmethod
     def variable(solver: Solver, length: int) -> BitVec:
         """
-        Constructs a new bit vector of length length filled with fresh
-        new literals from the solver.
+        Constructs a new bit vector of length `length` filled with fresh
+        literals from the solver.
         """
 
     @property
     def solver(self) -> Solver:
         """
         Returns the solver whose literals this vector contains. If the solver
-        is None, then all literals are either TRUE or FALSE.
+        is the calculator, then all literals are either TRUE or FALSE.
         """
 
     @property
     def literals(self) -> List[int]:
         """
-        Returns a copy of this vector as a python list. Generally you should
+        Returns a copy of this vector as a Python list. Generally, you should
         not use this method as you can index and use this class as a regular
         list.
         """
@@ -329,105 +329,105 @@ class BitVec(object):
 
     def __and__(self, other: BitVec) -> BitVec:
         """
-        Returns the element wise logical and of this vector and another one
+        Returns the elementwise logical and of this vector and another one
         of the same length.
         """
 
     def __or__(self, other: BitVec) -> BitVec:
         """
-        Returns the element wise logical or of this vector and another one
+        Returns the elementwise logical or of this vector and another one
         of the same length.
         """
 
     def __xor__(self, other: BitVec) -> BitVec:
         """
-        Returns the element wise logical xor of this vector and another one
+        Returns the elementwise logical xor of this vector and another one
         of the same length.
         """
 
     def comp_eq(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
-        TRUE in a single element vector if the two are equal.
+        TRUE in a single-element vector if the two are equal.
         """
 
     def comp_ne(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
-        TRUE in a single element vector if the two are not equal.
+        TRUE in a single-element vector if the two are not equal.
         """
 
     def comp_le(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
-        TRUE in a single element vector if the first is less than or equal
-        to the other one as seen as a binary number in little endian order.
+        TRUE in a single-element vector if the first is less than or equal
+        to the other one interpreted as a binary number in little-endian order.
         """
 
     def comp_lt(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
-        TRUE in a single element vector if the first is less than the other
-        one as seen as a binary number in little endian order.
+        TRUE in a single-element vector if the first is less than the other
+        one interpreted as a binary number in little-endian order.
         """
 
     def comp_ge(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
-        TRUE in a single element vector if the first is greater than or equal
-        to the other one as seen as a binary number in little endian order.
+        TRUE in a single-element vector if the first is greater than or equal
+        to the other one interpreted as a binary number in little-endian order.
         """
 
     def comp_gt(self, other: BitVec) -> BitVec:
         """
         Compares this vector with another one of the same length and returns
-        TRUE in a single element vector if the first is greater than the other
-        one as seen as a binary number in little endian order.
+        TRUE in a single-element vector if the first is greater than the other
+        one interpreted as a binary number in little-endian order.
         """
 
     def fold_all(self) -> BitVec:
         """
-        Computes the conjunction of the elements and returns a single element
+        Computes the conjunction of the elements and returns a single-element
         vector.
         """
 
     def fold_any(self) -> BitVec:
         """
-        Computes the disjunction of the elements and returns a single element
+        Computes the disjunction of the elements and returns a single-element
         vector.
         """
 
     def fold_one(self) -> BitVec:
         """
-        Computes the exactly one predicate over the given elements and returns
-        a single element vector.
+        Computes the exactly-one predicate over the given elements and returns
+        a single-element vector.
         """
 
     def fold_amo(self) -> BitVec:
         """
-        Computes the at most one predicate over the given elements and returns
-        a single element vector.
+        Computes the at-most-one predicate over the given elements and returns
+        a single-element vector.
         """
 
     def ensure_true(self):
         """
-        Takes a bit vector is size 1 and makes sure that the literal inside is
+        Takes a bit vector of size 1 and makes sure that the literal inside is
         true. If this is a calculator instance, then an assertion error is
-        thrown if the literal is not true.
+        raised if the literal is not true.
         """
 
     def ensure_false(self):
         """
-        Takes a bit vector is size 1 and makes sure that the literal inside is
+        Takes a bit vector of size 1 and makes sure that the literal inside is
         false. If this is a calculator instance, then an assertion error is
-        thrown if the literal is not false.
+        raised if the literal is not false.
         """
 
     def ensure_all(self):
         """
-        Makes sure that all literal in this bit vector is true. If this is a
-        solver instance, then all literals are forced true with a new clause.
-        If this is a calculator instance, then an assertion error is thrown
+        Makes sure that all literals in this bit vector are true. If this is a
+        solver instance, then each literal is forced to true with a new clause.
+        If this is a calculator instance, then an assertion error is raised
         if not all literals are true.
         """
 
@@ -435,7 +435,7 @@ class BitVec(object):
         """
         Makes sure that at least one literal in this bit vector is true. If
         this is a solver instance, then a single clause is added to the solver.
-        If this is a calculator instance, then an assertion error is thrown
+        If this is a calculator instance, then an assertion error is raised
         if all literals are false.
         """
 
@@ -443,7 +443,7 @@ class BitVec(object):
         """
         Makes sure that exactly one literal in this bit vector is true. If
         this is a solver instance, then a single clause is added to the solver.
-        If this is a calculator instance, then an assertion error is thrown
+        If this is a calculator instance, then an assertion error is raised
         if not exactly one literal is true.
         """
 
@@ -451,6 +451,6 @@ class BitVec(object):
         """
         Makes sure that at most one literal in this bit vector is true. If
         this is a solver instance, then a single clause is added to the solver.
-        If this is a calculator instance, then an assertion error is thrown
-        if not at most one literal is true.
+        If this is a calculator instance, then an assertion error is raised
+        if more than one literal is true.
         """

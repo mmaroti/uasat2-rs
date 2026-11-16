@@ -253,6 +253,7 @@ class Relation:
             return False
 
         return self.size == other.size and self.arity == other.arity \
+            and self.solver is other.solver \
             and self.table.literals == other.table.literals
 
     def comp_eq(self, other: 'Relation') -> BitVec:

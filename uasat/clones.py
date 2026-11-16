@@ -43,6 +43,7 @@ class RelClone:
 
 
 def preserves(operations: Iterable[Operation], relations: Iterable[Relation]) -> BitVec:
+    relations = list(relations)
     t = BitVec(Solver.CALC, [Solver.TRUE])
     for o in operations:
         for r in relations:

@@ -121,8 +121,8 @@ class Operation:
         return f"Operation({self.size}, {self.arity}, {self.solution().decode()})"
 
     def compose(self, args: Sequence['Operation'], partop: bool = False) -> 'Operation':
-        assert self.arity == len(args) and self.arity >= 1
-        new_arity = args[0].arity
+        assert self.arity == len(args)
+        new_arity = args[0].arity if args else 0
         total = self.arity + 1 + new_arity
 
         # 0..arity-1: temporary, arity: output, arity+1..arity+new_arity: input
